@@ -1,6 +1,8 @@
 # urlfinding
 Generic software for finding websites of enterprises using a search engine and machine learning.
 
+This repo is still work in progress, keep an eye on ots progress.
+
 ## Introduction
 This repository contains the software that was used for research on finding enterprise websites.
 For a detailed description of the methodology implemented we refer to the
@@ -15,5 +17,16 @@ In short the software operates as follows:
 This process model is shown in the figure below:
 ![process model](docs/urlfinding_process_model.png)
 
-## Usage
-This is still work in progress, please come back later.
+It is possible to skip the train and test phase and use the pre-trained model that is provided in this repository.
+
+## Software modules
+
+### The Google Search module
+
+### Using the pre-trained model
+
+### Training using your own dataset
+
+## Example: finding websites of National Statistical Offices (NSIs)
+
+todo
