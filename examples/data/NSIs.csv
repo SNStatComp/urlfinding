@@ -1,30 +1,30 @@
-name;address;phone;email 
-Statbel;North Gate – Bd du Roi Albert II, 16 – 1000 Brussels;(32) 02 0800 120 33;statbel@economie.fgov.be
-National Statistical Institute;2, P. Volov Str.; 1038 Sofia, Bulgaria;(359 2) 9857 700, 647, 771;info@nsi.bg
-Czech Statistical Office;Na padesatem 81, - 100 82 Praha 10, Czechia (CZ);(420) 274 051 111;infoservis@czso.cz
-Danmarks Statistik;Sejrøgade 11, Postboks 2550 - 2100 KØBENHAVN Ø, Denmark (DK);(45) 3917 3917dst@dst.dk
-Statistisches Bundesamt;Gustav-Stresemann-Ring, 11 Postfach 5528 - 65189 WIESBADEN, Country: Germany (D);(49)-611-75 (1);info@destatis.de
-Statistics Estonia;Tatari 51 - 10134 Tallinn, Estonia (EE);(372) 6259 300;stat@stat.ee
-Central Statistics Office;Skehard Road - Cork, Ireland;(353) 21 453 5000;information@cso.ie
-Hellenic Statistical Authority;46, Peiraios str. and Eponiton - 18510 Piraeus, Greece (EL);(0030) 213 135 2000;info@statistics.gr
-Instituto Nacional de Estadistica (INE);Paseo de la Castellana, 183 - Madrid 28046, Spain (E);(34) 91 583 9100;info@ine.es
-INSEE, Direction générale;88 avenue Verdier - CS 70058 - 92541 Montrouge Cedex. France (F);(33) 1 87 69 50 00;
-Croatian Bureau of Statistics (CBS);Ilica 3 - 10000 Zagreb, Croatia;(385 1) 48 06 138;stat.info@dzs.hr
-Istituto Nazionale di Statistica;Via Cesare Balbo - 00184 Roma, Italy (I);(39) 06 4673 2243-2244;comunica@istat.it
-Statistical Service of Cyprus;Michalakis Karaolis street - 1444 Nicosia, Cyprus;(357) 22 602 102;eustatistics@cystat.mof.gov.cy
-Central Statistical Bureau of Latvia;Lacplesa Street 1 - 1301 Riga, Latvia (LV);(371) 73 36 335;csb@csb.gov.lv
-Statistics Lithuania;29 Gedimino pr. - 2746 Vilnius, Lithuania (LT);(370) 5 236 48 22;statistika@stat.gov.lt
-Service Central de la Statistique et des Etudes Economiques;Centre Administratif Pierre Werner 13, rue Erasme L - 1468 Luxembourg-Kirchberg, Luxembourg (L);info@statec.etat.lu
-Hungarian Central Statistical Office;Keleti Karoly u. 5-7 P.O. Box 51 - 1525 Budapest, Hungary (HU);(361) 345 6000;ksh@ksh.hu
-National Statistics Office;Lascaris - Valetta CMR02, Malta (MT);(356) 25997000;nso@gov.mt
-Centraal Bureau voor de Statistiek;Henri Faasdreef 312 2492 JP Den Haag, Netherlands (NL);(31) 70 337 38 00;infoservice@cbs.nl
-Statistik Austria;Guglgasse 13 - 1110 Wien, Austria (A);(43) 1 711 28 7070;info@statistik.gv.at
-Statistics Poland;Al. Niepodleglosci 208 - 00-925 Warsaw, Poland (P);(48) 22 608 30 00;dane@stat.gov.pl
-Instituto Nacional de Estatistica;Avenida António José de Almeida, 2 - 1000-043 LISBOA, Portugal (P);(351) 218 440 695;info@ine.pt
-Institutul National de Statistica;Libertatii, nr 16, sector 5 - Bucuresti, Romania (RO);(4021) 336 26 91;romstat@insse.ro
-Statistical Office of the Republic of Slovenia;Vožarski pot 12 - 1000 Ljubljana,Slovenia (SI);386) 1 241 51 04;info.stat@gov.si
-Statistical Office of the Slovak Republic;Mileticova 3 - 824 67 Bratislava, Slovakia (SK);(421) 2 502 36 341;info@statistics.sk
-Statistics Finland;FI-00022 Statistics Finland, Finland (FIN);(358) 9 1734 1stat@stat.fi
-Statistics Sweden (SCB);Box 24300 - 104 51 STOCKHOLM, Sweden (SE);(46) 8 5069 4000;scb@scb.se
-Office for National Statistics (ONS);Head of the Government Statistical Service 1 Drummond Gate - LONDON SW1V 2QQ, United Kingdom (UK);(44)(0) 845 601 3034;info@statistics.gov.uk
-Statistics Iceland;Borgartuni 21a - 150 Reykjavik,Iceland (IS);(354) 528 1000;information@statice.is
+id;tradename;legalname;address;postalcode;locality;country;phone;email 
+1;Statbel;Statbel;North Gate – Bd du Roi Albert II, 16;1000;Brussels;;(32) 02 0800 120 33;statbel@economie.fgov.be
+2;National Statistical Institute;National Statistical Institute;2, P. Volov Str.;1038;Sofia;Bulgaria;(359 2) 9857 700, 647, 771;info@nsi.bg
+3;Czech Statistical Office;Czech Statistical Office;Na padesatem 81;100 82;Praha 10;Czechia (CZ);(420) 274 051 111;infoservis@czso.cz
+4;Danmarks Statistik;Danmarks Statistik;Sejrøgade 11, Postboks 2550;2100;KØBENHAVN Ø;Denmark (DK);(45) 3917 3917;dst@dst.dk
+5;Statistisches Bundesamt;Statistisches Bundesamt;Gustav-Stresemann-Ring, 11 Postfach 5528;65189;WIESBADEN;Germany (D);(49)-611-75 (1);info@destatis.de
+6;Statistics Estonia;Statistics Estonia;Tatari 51;10134;Tallinn;Estonia (EE);(372) 6259 300;stat@stat.ee
+7;Central Statistics Office;Central Statistics Office;Skehard Road;;Cork;Ireland;(353) 21 453 5000;information@cso.ie
+8;Hellenic Statistical Authority;Hellenic Statistical Authority;46, Peiraios str. and Eponiton;18510;Piraeus;Greece (EL);(0030) 213 135 2000;info@statistics.gr
+9;Instituto Nacional de Estadistica (INE);Instituto Nacional de Estadistica (INE);Paseo de la Castellana, 183;28046;Madrid;Spain (E);(34) 91 583 9100;info@ine.es
+10;INSEE, Direction générale;INSEE, Direction générale;88 avenue Verdier - CS 70058;92541;Montrouge Cedex.;France (F);(33) 1 87 69 50 00;
+11;Croatian Bureau of Statistics (CBS);Croatian Bureau of Statistics (CBS);Ilica 3;10000;Zagreb;Croatia;(385 1) 48 06 138;stat.info@dzs.hr
+12;Istituto Nazionale di Statistica;Istituto Nazionale di Statistica;Via Cesare Balbo;00184;Roma;Italy (I);(39) 06 4673 2243-2244;comunica@istat.it
+13;Statistical Service of Cyprus;Statistical Service of Cyprus;Michalakis Karaolis street;1444;Nicosia;Cyprus;(357) 22 602 102;eustatistics@cystat.mof.gov.cy
+14;Central Statistical Bureau of Latvia;Central Statistical Bureau of Latvia;Lacplesa Street 1;1301;Riga;Latvia (LV);(371) 73 36 335;csb@csb.gov.lv
+15;Statistics Lithuania;Statistics Lithuania;29 Gedimino pr.;2746;Vilnius;Lithuania (LT);(370) 5 236 48 22;statistika@stat.gov.lt
+16;Service Central de la Statistique et des Etudes Economiques;Service Central de la Statistique et des Etudes Economiques;Centre Administratif Pierre Werner 13, rue Erasme L;1468;Luxembourg-Kirchberg;Luxembourg (L);;info@statec.etat.lu
+17;Hungarian Central Statistical Office;Hungarian Central Statistical Office;Keleti Karoly u. 5-7 P.O. Box 51;1525;Budapest;Hungary (HU);(361) 345 6000;ksh@ksh.hu
+18;National Statistics Office;National Statistics Office;Lascaris;VLT 2000;Valetta CMR02;Malta (MT);(356) 25997000;nso@gov.mt
+19;Centraal Bureau voor de Statistiek;Centraal Bureau voor de Statistiek;Henri Faasdreef 312;2492 JP;Den Haag;Netherlands (NL);(31) 70 337 38 00;infoservice@cbs.nl
+20;Statistik Austria;Statistik Austria;Guglgasse 13;1110;Wien;Austria (A);(43) 1 711 28 7070;info@statistik.gv.at
+21;Statistics Poland;Statistics Poland;Al. Niepodleglosci 208;00-925;Warsaw;Poland (P);(48) 22 608 30 00;dane@stat.gov.pl
+22;Instituto Nacional de Estatistica;Instituto Nacional de Estatistica;Avenida António José de Almeida, 2;1000-043;LISBOA;Portugal (P);(351) 218 440 695;info@ine.pt
+23;Institutul National de Statistica;Institutul National de Statistica;Libertatii, nr 16, sector 5;;Bucuresti;Romania (RO);(4021) 336 26 91;romstat@insse.ro
+24;Statistical Office of the Republic of Slovenia;Statistical Office of the Republic of Slovenia;Vožarski pot 12;1000;Ljubljana;Slovenia (SI);386) 1 241 51 04;info.stat@gov.si
+25;Statistical Office of the Slovak Republic;Statistical Office of the Slovak Republic;Mileticova 3;824 67;Bratislava;Slovakia (SK);(421) 2 502 36 341;info@statistics.sk
+26;Statistics Finland;Statistics Finland;Työpajankatu 13;FI-00580;Helsinki;Finland (FIN);(358) 9 1734 1;stat@stat.fi
+27;Statistics Sweden (SCB);Statistics Sweden (SCB);Box 24300;104 51;STOCKHOLM;Sweden (SE);(46) 8 5069 4000;scb@scb.se
+28;Office for National Statistics (ONS);Office for National Statistics (ONS);Head of the Government Statistical Service 1 Drummond Gate; SW1V 2QQ;LONDON;United Kingdom (UK);(44)(0) 845 601 3034;info@statistics.gov.uk
+29;Statistics Iceland;Statistics Iceland;Borgartuni 21a;150;Reykjavik;Iceland (IS);(354) 528 1000;information@statice.is

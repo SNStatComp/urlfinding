@@ -19,6 +19,14 @@ This process model is shown in the figure below:
 
 It is possible to skip the train and test phase and use the pre-trained model that is provided in this repository.
 
+## Install from source
+
+Use the following commands to install urlfinding.
+```bash
+git clone https://github.com/SNStatComp/urlfinding.git # or download and unzip this repository
+cd urlfinding
+python setup.py install
+```
 ## Quick start: finding websites of NSIs
 
 In this example we search for websites of Nationa Statistical Offices (NSIs) using a pre-trained model provided in this repo.

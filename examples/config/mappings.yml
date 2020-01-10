@@ -1,0 +1,37 @@
+# In this block you must map the column names in the 'enterprises' file to the names used internally
+# If you want to combine several columns you must create a list. See 'Location' below
+# If you want to train a model, you need to provide a url, if used for predicting, Url can be left empty
+columns:
+  Id:            id  #unique identifier of a record in the file
+  TradeName:     tradename
+  LegalName:     legalname
+  Address:       address
+  PostalcodeNum: 
+  PostalcodeLtr: 
+  Postalcode:    postalcode
+  Locality:      locality
+  Location:      [address, ' ', locality]
+  Telephone:
+  Url:
+# In this block the search terms are specified. This example contains 6 queries.
+# A term is specified as a list. This list is transformed to a string.
+# If an element of this list is a column in the 'enterprise' file the value of this column for the current enterprise is used,
+# otherwise this element is treated as a string.
+# For example: If the TradeName of the enterprise is 'Statistics Netherlands', the first query becomes 'Statistics Netherlands contact' 
+search:
+  - {term: [TradeName, ' ', contact]}
+  - {term: [TradeName, ' ', Address, ' ', contact]}
+  - {term: [TradeName, ' ', Postalcode, ' ', contact]}
+  - {term: [Location]}
+  - {term: [TradeName]}
+  - {term: [TradeName, " inanchor:contact"]}
+# In this block you must specify the columns used for creating the features used for training and predicting.
+# For this version you have to leave this as is
+features:
+  - TradeName
+  - LegalName
+  - Address
+  - Postalcode
+  - Locality
+  - Location
+

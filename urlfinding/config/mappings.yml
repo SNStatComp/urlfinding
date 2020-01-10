@@ -1,0 +1,27 @@
+columns:
+  Id:            CbsPersoonIdentificatie  #unique identifier of a record in the file
+  TradeName:     CpHandelsnaam
+  LegalName:     CpJuridischeNaam
+  Address:       street
+  PostalcodeNum: CpCorrPostcodeNumeriek
+  PostalcodeLtr: CpCorrPostcodeLetters
+  Postalcode:    [CpCorrPostcodeNumeriek, CpCorrPostcodeLetters]
+  Locality:      CpCorrWoonplaats
+  Location:      location
+  Telephone:
+  Url:
+search:
+  - {term: [TradeName, ' ', contact], orTerm: [LegalName]}
+  - {term: [TradeName, ' ', Address, ' ', contact], orTerm: [LegalName]}
+  - {term: [TradeName, ' ', Postalcode, ' ', contact], orTerm: [LegalName]}
+  - {term: [Location]}
+  - {term: [TradeName], orTerm: [LegalName]}
+  - {term: [TradeName, " inanchor:contact"], orTerm: [LegalName]}
+features:
+  - TradeName
+  - LegalName
+  - Address
+  - Postalcode
+  - Locality
+  - Location
+
