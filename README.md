@@ -19,7 +19,7 @@ This process model is shown in the figure below:
 
 It is possible to skip the train and test phase and use the pre-trained model that is provided in this repository.
 
-## Get your Google Search IDs
+## Google Search IDs
 
 This software uses [Google custom search JSON API](https://developers.google.com/custom-search/v1/overview)
 which offers 100 search queries per day for free. Use the paid version if you need more.
@@ -43,7 +43,7 @@ Notebook `nsis_pretrained.pynb` contains an example to search for websites of Na
 
 Notebook `nsis_train.pynb` contains an example to search for websites of National Statistical Offices NSIs) including the training phase.
 
-## urlfinding API
+## API
 
 Include the `urlfinding` module as follows
 ```
