@@ -26,9 +26,9 @@ which offers 100 search queries per day for free. Use the paid version if you ne
 
 To get started configure a custom search engine and get your API key from the link above.
 Make sure to enable the search engine feature 'Search whole internet'.
-Then add the API key and the search engine ID to the config.yml file of the software.
+Then add the API key and the search engine ID to the `config.yml` file of the software.
 
-## Install from source
+## Install urlfinding
 
 Use the following commands to install urlfinding.
 ```bash
@@ -38,15 +38,24 @@ python setup.py install
 ```
 ## Quick start: finding websites of NSIs
 
-In this example we search for websites of Nationa Statistical Offices (NSIs) using a pre-trained model provided in this repo.
+The examples folder contains several quickstart Python notebooks.
+Notebook `nsis_pretrained.pynb` contains an example to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
 
-<TODO> 
+Notebook `nsis_train.pynb` contains an example to search for websites of National Statistical Offices NSIs) including the training phase.
 
-## Software modules
+## urlfinding API
 
-### The Google Search module
+Include the `urlfinding` module as follows
+```
+import urlfinding as uf
+```
+Then you have the following functions:
 
-### Using the pre-trained model
+### Scrape
 
-### Training using your own dataset
+### Process
+
+### Predict
+
+### Train
 
