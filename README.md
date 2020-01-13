@@ -21,12 +21,12 @@ It is possible to skip the train and test phase and use the pre-trained model th
 
 ## Get your Google Search IDs
 
-This software uses [Google custom search JSON API](https://developers.google.com/custom-search/v1/overview).
-They offer 100 search queries per day for free, use the paid version for more.
+This software uses [Google custom search JSON API](https://developers.google.com/custom-search/v1/overview)
+which offers 100 search queries per day for free. Use the paid version if you need more.
 
-To get started configure a custom search engine and get your API key, both from the link above.
-In the configuration of the search engine make sure you turn on the button 'Search whole internet' or whatever it is called in your language.
-Then configure the API key and the search engine ID in the config of the config.yml file of the software.
+To get started configure a custom search engine and get your API key from the link above.
+Make sure to enable the search engine feature 'Search whole internet'.
+Then add the API key and the search engine ID to the config.yml file of the software.
 
 ## Install from source
 
