@@ -30,6 +30,8 @@ Then add the API key and the search engine ID to the `config.yml` file of the so
 
 ## Install urlfinding
 
+We assume an Python Anaconda distribution
+
 Use the following commands to install urlfinding.
 ```bash
 git clone https://github.com/SNStatComp/urlfinding.git # or download and unzip this repository

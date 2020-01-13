@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.externals import joblib
+import joblib
 from sklearn.svm import SVC
 from yaml import load, FullLoader
 import os

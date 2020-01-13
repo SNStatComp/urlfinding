@@ -5,7 +5,7 @@ import re
 import matplotlib.pyplot as plt 
 import pycm
 import os
-from sklearn.externals import joblib
+import joblib
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from yellowbrick.classifier import ClassificationReport, ConfusionMatrix, ROCAUC, PrecisionRecallCurve
@@ -153,9 +153,9 @@ def start(date, dataFile, popFile, mla, case):
     cmdf = pd.DataFrame(data=cm)
     return model, train, test, X_train, y_train, X_test, y_test, cmdf
 
-mla = 'svm'
-case = 'no_mean'
-date = '20190726'
-featurefile = './data/20190517features_agg.csv'
-population = './data/companies.csv'
-model, train, test, X_train, y_train, X_test, y_test, cm = start(date, featurefile, population, mla, case)
+# mla = 'svm'
+# case = 'no_mean'
+# date = '20190726'
+# featurefile = './data/20190517features_agg.csv'
+# population = './data/companies.csv'
+# model, train, test, X_train, y_train, X_test, y_test, cm = start(date, featurefile, population, mla, case)

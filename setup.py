@@ -13,6 +13,14 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/SNStatComp/urlfinding.git",
     packages=setuptools.find_packages(),
+	install_requires=[
+		"google-api-python-client",
+        "flatten_json",
+        "jellyfish",
+        "pycm",
+        "yellowbrick"
+	],
+	#py_modules=['urlfinding', 'urlfinding.googlesearch', 'urlfinding.scrape', 'urlfinding.process', 'urlfinding.predict', 'urlfinding.train'],
     classifiers=[
         "Development Status :: 4 - Beta"
         "Programming Language :: Python :: 3",
@@ -20,4 +28,5 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    zip_safe=False
 )

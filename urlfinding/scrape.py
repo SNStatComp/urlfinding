@@ -9,9 +9,8 @@ import os
 #import googlesearch
 from urllib.parse import urlparse
 import requests
-import fire
 import time
-from googlesearch import GoogleSearch
+from urlfinding.googlesearch import GoogleSearch
 
 cwd = os.getcwd()
 STREETNAME = 'Streetname'
