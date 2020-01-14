@@ -21,17 +21,16 @@ It is possible to skip the train and test phase and use the pre-trained model th
 
 ## Google Search IDs
 
-This software uses [Google custom search JSON API](https://developers.google.com/custom-search/v1/overview)
+This software uses the [Google custom search JSON API](https://developers.google.com/custom-search/v1/overview)
 which offers 100 search queries per day for free. Use the paid version if you need more.
 
 To get started configure a custom search engine and get your API key from the link above.
 Make sure to enable the search engine feature 'Search whole internet'.
-Then add the API key and the search engine ID to the `config.yml` file of the software.
+Then add the API key and the search engine ID to the `config.yml` file.
 
 ## Install urlfinding
 
-We assume a Python Anaconda distribution.
-Use the following commands to install urlfinding.
+Assuming a Python Anaconda distribution, use the following commands to install urlfinding:
 ```bash
 git clone https://github.com/SNStatComp/urlfinding.git # or download and unzip this repository
 cd urlfinding
@@ -39,10 +38,9 @@ python setup.py install
 ```
 ## Quick start: finding websites of NSIs
 
-The examples folder contains a quickstart Python notebook.
-
-Notebook [nsis.ipynb](examples/nsis.pynb) contains an example to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
-Also it contains a section that explanins how to train your own model.
+The examples folder contains a quickstart Python notebook [examples/nsis.ipynb](examples/nsis.pynb) showing how to search for websites of National Statistical Offices (NSIs)
+using the pre-trained model provided in this repo.
+Also it contains a section that explainns how to train your own model.
 
 ## API
 
@@ -91,9 +89,9 @@ This function creates the feature file <YYYYMMDD_>_features___agg.csv in the dat
 
 This function predicts urls using a previously trained ML model.
 
-- `model_file`: Pickle file containing the ML model (created with our package)
-
 - `feature_file`: file containing the features
+
+- `model_file`: Pickle file containing the ML model (created with our package)
 
 - `base_file`: See base_file at `uf.scrape.start()`
 
