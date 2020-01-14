@@ -41,7 +41,7 @@ python setup.py install
 
 The examples folder contains a quickstart Python notebook.
 
-Notebook [nsis.pynb](examples/nsis.pynb) contains an example to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
+Notebook [nsis.ipynb](examples/nsis.pynb) contains an example to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
 Also it contains a section that explanins how to train your own model.
 
 ## API
