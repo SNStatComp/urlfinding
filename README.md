@@ -38,13 +38,12 @@ python setup.py install
 ```
 ## Quick start: finding websites of NSIs
 
-The examples folder contains a quickstart Python notebook [examples/nsis.ipynb](examples/nsis.pynb) showing how to search for websites of National Statistical Offices (NSIs)
-using the pre-trained model provided in this repo.
-Also it contains a section that explainns how to train your own model.
+The examples folder contains a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs)
+using the pre-trained model provided in this repo and how to train your own model.
 
 ## API
 
-Include the `urlfinding` module as follows
+Include the `urlfinding` module as follows:
 ```
 import urlfinding as uf
 ```
