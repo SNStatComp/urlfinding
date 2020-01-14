@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import classification_report, confusion_matrix
 from yellowbrick.classifier import ClassificationReport, ConfusionMatrix, ROCAUC, PrecisionRecallCurve
 from yellowbrick.style.palettes import PALETTES, SEQUENCES
-from yaml import load
+from yaml import load, FullLoader
 import seaborn as sns
 
 sns.set()
@@ -31,7 +31,7 @@ def createTrainTest(data, pop, id, feat, target):
 
 def initModel(mla, date, case):
     with open(f'{cwd}/config/{date}hyperparam_{case}.yml', 'r') as f:
-        params = load(f)
+        params = load(f, Loader=FullLoader)
     if mla == 'nb':
         from sklearn.naive_bayes import GaussianNB
         model = GaussianNB()
