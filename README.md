@@ -67,7 +67,7 @@ The legal name can be the same as the tradename if you have only one name.
 
 This function creates a file (<YYYYMMDD_>_searchResult.csv_) in the _data folder containing the search results, where YYYYMMDD is the current date.
 
-To facilitate splitting up multiple search sessions on bigger data files, the search function creates a file `maxrownum` in the project folder which contains the id of the record that was processed last. The search function will read this file to start on the next record. Hence if you want to start again from the beginning of a file either remove the `maxrownum` file or replace its content with 0.
+To facilitate splitting up multiple search sessions on bigger data files, the search function creates a file `maxrownum` in the project folder which contains the id of the record that was processed last. The search function will read this file upon startup and start on the next record. Hence, if you want to start again from the beginning of a file either remove the `maxrownum` file or replace its content with 0.
 
 
 ### Extract
