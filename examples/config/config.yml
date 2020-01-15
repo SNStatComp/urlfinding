@@ -1,0 +1,4 @@
+key:            # your Google API key here
+searchengineid: # your search engine id here
+geolocation:    nl # country of your google host here eg. nl. Default: ''
+language:       en # restricts the search to documents in particular language eg. nl. Default: ''
