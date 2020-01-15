@@ -1,7 +1,7 @@
 # urlfinding
 Generic software for finding websites of enterprises using a search engine and machine learning.
 
-This repo is still work in progress.
+This repo is still work in progress, i.e. the training function will be documented later.
 
 ## Introduction
 This repository contains the software that was used for research on finding enterprise websites.
@@ -39,8 +39,6 @@ python setup.py install
 ## Quick start: finding websites of NSIs
 
 The examples folder contains a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
-
-There is also a section on how to train your own model if you wish.
 
 ## API
 
@@ -108,6 +106,7 @@ This function creates the file <base__file>_url.csv in the data folder containin
 
 ### Train
 
+Documentation will follow later.
 
 
 ## Limitations
