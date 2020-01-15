@@ -52,7 +52,7 @@ Then you have the following functions:
 
 ### Search
 
-`uf.search(base_file, googleconfig, blacklist, nrows)`
+`uf.search(base_file, googleconfig, blacklist, [startrow], nrows)`
 
 This function startes a Google search.
 
@@ -63,7 +63,7 @@ The legal name can be the same as the tradename if you have only one name.
 
 - `blacklist`: A file containing urls you want to exclude from your search
 
-- `startrows`: *optional* record number to start with. If absent the search function will start from the record that was processed in the last session. This is registered in the file `maxrownum` in the project folder. This mechanism is useful in case you want to split up your search in multiple search sessions on bigger data files. 
+- `startrow`: *optional* record number to start with. If absent the search function will start from the record that was processed in the last session. This is registered in the file `maxrownum` in the project folder. This mechanism is useful in case you want to split up your search in multiple search sessions on bigger data files. 
 
 - `nrows`: Number of records to process. Google provides 100 queries per day for free. The urlfinding software issues 6 queries per record (see methodology paper reference above). Thus for example 10 enterprises 6 * 10 = 60 queries are fired. Every query returns at most 10 search results.
 

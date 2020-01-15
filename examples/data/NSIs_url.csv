@@ -1,0 +1,15 @@
+;id;tradename;legalname;address;postalcode;locality;country;phone;host;eqPred;pTrue
+0;1;Danmarks Statistik;Danmarks Statistik;Sejrøgade 11, Postboks 2550;2100;KØBENHAVN Ø;Denmark;(45) 3917 3917;dst.dk;True;0.7840473877922685
+1;2;Statistics Estonia;Statistics Estonia;Tatari 51;10134;Tallinn;Estonia;(372) 6259 300;stat.ee;True;0.9491882612732601
+2;3;INSEE, Direction générale;INSEE, Direction générale;88 avenue Verdier - CS 70058;92541;Montrouge Cedex.;France;(33) 1 87 69 50 00;insee.fr;True;0.857057976321346
+3;4;ISTAT;Istituto Nazionale di Statistica;Via Cesare Balbo;184;Roma;Italy;(39) 06 4673 2243-2244;istat.it;True;0.8374106147032636
+4;5;Statistical Service of Cyprus;Statistical Service of Cyprus;Michalakis Karaolis street;1444;Nicosia;Cyprus;(357) 22 602 102;gov.cy;True;0.96750778519198
+5;6;National Statistics Office;National Statistics Office;Lascaris;VLT 2000;Valetta CMR02;Malta;(356) 25997000;gov.mt;True;0.7834936638134196
+6;7;Statistik Austria;Statistik Austria;Guglgasse 13;1110;Wien;Austria;(43) 1 711 28 7070;gv.at;True;0.376872209605252
+7;8;Statistics Poland;Statistics Poland;Al. Niepodleglosci 208;00-925;Warsaw;Poland;(48) 22 608 30 00;gov.pl;True;0.9030212123190647
+8;9;Statistical Office of the Republic of Slovenia;Statistical Office of the Republic of Slovenia;Vožarski pot 12;1000;Ljubljana;Slovenia;386) 1 241 51 04;stat.si;True;0.537509338895006
+9;10;Statistical Office of the Slovak Republic;Statistical Office of the Slovak Republic;Mileticova 3;824 67;Bratislava;Slovakia;(421) 2 502 36 341;statistics.sk;True;0.6666688156485608
+10;11;Statistics Finland;Statistics Finland;Työpajankatu 13;FI-00580;Helsinki;Finland;(358) 9 1734 1;tilastokeskus.fi;True;0.8247732431502715
+11;12;Statistics Sweden (SCB);Statistics Sweden (SCB);Box 24300;104 51;STOCKHOLM;Sweden;(46) 8 5069 4000;scb.se;True;0.8198316997414743
+12;13;Office for National Statistics (ONS);Office for National Statistics (ONS);Head of the Government Statistical Service 1 Drummond Gate; SW1V 2QQ;LONDON;United Kingdom;(44)(0) 845 601 3034;ac.uk;False;0.04849663074062152
+13;14;Statistics Iceland;Statistics Iceland;Borgartuni 21a;150;Reykjavik;Iceland;(354) 528 1000;statice.is;True;0.9049322549115936
