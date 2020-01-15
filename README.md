@@ -21,7 +21,7 @@ It is possible to skip the train and test phase and use the pre-trained model th
 
 ## Google Search IDs
 
-This software uses the *Google custom search JSON API*
+This software uses the *[Google custom search JSON API](https://developers.google.com/custom-search)*
 which offers 100 search queries per day for free. Use the paid version if you need more.
 
 To get started configure a custom search engine and get your API key from [here](https://developers.google.com/custom-search/v1/overview).
@@ -38,8 +38,9 @@ python setup.py install
 ```
 ## Quick start: finding websites of NSIs
 
-The examples folder contains a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs)
-using the pre-trained model provided in this repo and how to train your own model.
+The examples folder contains a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
+
+There is also a section on how to train your own model if you wish.
 
 ## API
 
@@ -51,26 +52,29 @@ Then you have the following functions:
 
 ### Scrape
 
-`uf.scrape.start(base_file, googleconfig, blacklist, nrows)`
+`uf.scrape(base_file, googleconfig, blacklist, nrows)`
 
 This function startes a Google search.
 
-- `base_file`: A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl_) the file must at least include the following columns: _id, tradename, legalname, address, postalcode and locality. The column names can be specified in a mapping file (see config/mappings.yml for an example)
+- `base_file`: A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl_) the file must at least include the following columns: _id, tradename, legalname, address, postalcode and municipality. The column names can be specified in a mapping file (see config/mappings.yml for an example).
+The legal name can be the same as the tradename if you have only one name.
 
 - `googleconfig`: This file contains your credentials for using the Google custom search engine API
 
 - `blacklist`: A file containing urls you want to exclude from your search
 
-- `nrows`: Number of enterprises you want to search for. Google provides 100 queries per day for free. In this example for every enterprise 6 queries are performed, thus for 10 enterprises 6 * 10 = 60 queries. Every query returns at most 10 search results.
+- `nrows`: Number of records to process. Google provides 100 queries per day for free. The urlfinding software issues 6 queries per record (see methodology paper reference above). Thus for example 10 enterprises 6 * 10 = 60 queries are fired. Every query returns at most 10 search results.
 
 This function creates a file (<YYYYMMDD_>_searchResult.csv_) in the _data folder containing the search results, where YYYYMMDD is the current date.
 
+To facilitate splitting up multiple search sessions on bigger data files, the search function creates a file `maxrownum` in the project folder which contains the id of the record that was processed last. The search function will read this file to start on the next record. Hence if you want to start again from the beginning of a file either remove the `maxrownum` file or replace its content with 0.
 
-### Process
 
-`uf.process.start(date, data_files, blacklist)`
+### Extract
 
-This function created a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
+`uf.extract(date, data_files, blacklist)`
+
+This function extracts a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
 
 
 - `date`: Used for adding a 'timestamp' to the name of the created feature file
@@ -84,7 +88,7 @@ This function creates the feature file <YYYYMMDD_>_features___agg.csv in the dat
 
 ### Predict
 
-`uf.predict.start(feature_file, model_file, base_file)`
+`uf.predict(feature_file, model_file, base_file)`
 
 This function predicts urls using a previously trained ML model.
 
