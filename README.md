@@ -30,7 +30,7 @@ Then add the API key and the search engine ID to the `config.yml` file.
 
 ## Install urlfinding
 
-Assuming a Python Anaconda distribution, use the following commands to install urlfinding:
+Assuming a Python Anaconda distribution, use the following commands to install urlfinding from your anaconda prompt:
 ```bash
 git clone https://github.com/SNStatComp/urlfinding.git # or download and unzip this repository
 cd urlfinding
@@ -108,3 +108,7 @@ This function creates the file <base__file>_url.csv in the data folder containin
 
 ### Train
 
+
+
+## Limitations
+- The urlfinding returns domains of length 2 only, i.e. no subdomains of cbs.nl
