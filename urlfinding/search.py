@@ -71,7 +71,7 @@ def editStreet(name):
         location = ''
     return location
 
-def search(item, googleSearch):
+def search_item(item, googleSearch):
     result = []
     if item['term']:
         result = googleSearch.search({
@@ -106,7 +106,7 @@ def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrow
                 'Id': company['Id'],
                 'queryType': i
             }
-            res = search(searchTerm, googleSearch)
+            res = search_item(searchTerm, googleSearch)
             if len(res) > 0:
                 if not os.path.isfile(fileOut):
                     res.to_csv(fileOut, sep=';', index=False, float_format='%.0f')
@@ -123,9 +123,22 @@ def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrow
         fstart.seek(0)
         fstart.write(str(skiprows))
 
-def start(fileIn, googleconfig, blacklist, nrows):
+def search(fileIn, googleconfig, blacklist, nrows):
+    '''
+    This function startes a Google search.
+
+    - `base_file`: A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl) the file must at least include the following columns: id, tradename, legalname, address, postalcode and locality. The column names can be specified in a mapping file (see config/mappings.yml for an example)
+
+    - `googleconfig`: This file contains your credentials for using the Google custom search engine API
+
+    - `blacklist`: A file containing urls you want to exclude from your search
+
+    - `nrows`: Number of enterprises you want to search for. Google provides 100 queries per day for free. In this example for every enterprise 6 queries are performed, thus for 10 enterprises 6 * 10 = 60 queries. Every query returns at most 10 search results.
+
+    This function creates a file (<YYYYMMDD>searchResult.csv) in the 'data' folder containing the search results, where YYYYMMDD is the current date.
+    '''
     with open(googleconfig, 'r') as f:
-        settings = load(f)
+        settings = load(f, Loader=FullLoader)
         googleSearch = GoogleSearch(settings)
 
     with open(blacklist, 'r') as f:
@@ -145,4 +158,4 @@ def start(fileIn, googleconfig, blacklist, nrows):
 
     main(fileIn, fileOut, blacklist, log, googleSearch, fstart, maxrownum, nrows)
     fstart.close()
-    print(f'Searchresults saved in {fileOut}')
+    print(f'\nSearchresults saved in {fileOut}')

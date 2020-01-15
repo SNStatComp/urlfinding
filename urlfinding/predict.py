@@ -8,7 +8,7 @@ cwd = os.getcwd()
 MAPPINGS = f'{cwd}/config/mappings.yml'
 POPULATION = './data/companies.csv'
 
-def predict(model, data, pop):
+def get_prediction(model, data, pop):
     try:
         X = data[model['model_features']]
     except:
@@ -27,7 +27,25 @@ def predict(model, data, pop):
                       how='right', on=['Id'])
     return result, res
 
-def start(feature_file, model_file, base_file):
+def predict(feature_file, model_file, base_file):
+    '''
+    This function predicts urls using a previously trained ML model.
+
+    - `feature_file`: file containing the features
+
+    - `model_file`: Pickle file containing the ML model (created with our package)
+
+    - `base_file`: See base_file at `uf.scrape.start()`
+
+    This function creates the file <base_file>_url.csv in the data folder containing the predicted urls. This file contains all data from the base file with 3 columns added:
+
+    - `host`: the predicted url
+
+    - `eqPred`: An indicator showing whether the predicted url is the right one
+
+    - `pTrue`: An indicator showing the confidence of the prediction, a number between 0 and 1 where 0: almost certain not the url and 1: almost certain the right url. eqPred is derived from pTrue: if pTrue>0.5 then eqPred=True else eqPred=False
+    '''
+
     with open(MAPPINGS,'r') as f:
         config = load(f, Loader=FullLoader)
     recid_base = config['columns']['Id']
@@ -35,7 +53,7 @@ def start(feature_file, model_file, base_file):
     model = joblib.load(model_file)
     data = pd.read_csv(feature_file, sep=';')
     pop = pd.read_csv(POPULATION, sep=';')
-    result, _ = predict(model, data, pop)
+    result, _ = get_prediction(model, data, pop)
 
     inp = pd.read_csv(base_file, sep=';')
     inp_url = inp.merge(result[['Id', 'host', 'eqPred', 'pTrue']], left_on=recid_base, right_on='Id', how='left')
