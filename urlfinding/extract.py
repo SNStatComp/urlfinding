@@ -143,7 +143,18 @@ def aggregate_urls(data):
     res['seq_score_perc'] = res['seq_score_sum']/res['seq_score_total_max']
     return res
 
-def start(date, dataFiles, blacklistFile):
+def extract(date, dataFiles, blacklistFile):
+    '''
+    This function created a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
+
+    - `date`: Used for adding a 'timestamp' to the name of the created feature file
+
+    - `data_files`: list of files containing the search results
+
+    - `blacklist`: see above
+
+    This function creates the feature file <YYYYMMDD>features_agg.csv in the data folder
+    '''
     cwd = os.getcwd()
     allVars = ['Id', 'TradeName', 'LegalName', 'Address', 'Postalcode', 'Locality', 'Telephone']
     

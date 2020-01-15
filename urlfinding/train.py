@@ -143,7 +143,7 @@ def get_feat_target(cols, case):
     target = 'eqUrl'
     return feat, target
 
-def start(date, dataFile, popFile, mla, case):
+def train(date, dataFile, popFile, mla, case):
     pop = pd.read_csv(popFile, sep=';')
     data = pd.read_csv(dataFile, sep=';')
     feat, target = get_feat_target(data.columns.tolist(), case)
