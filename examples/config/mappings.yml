@@ -1,30 +1,38 @@
 # In this block you must map the column names in the 'enterprises' file to the names used internally
 # If you want to combine several columns you must create a list. See 'Location' below
 # If you want to train a model, you need to provide a url, if used for predicting, Url can be left empty
-columns:
-  Id:            id  #unique identifier of a record in the file
-  TradeName:     tradename
-  LegalName:     legalname
-  Address:       address
-  PostalcodeNum: 
-  PostalcodeLtr: 
-  Postalcode:    postalcode
-  Locality:      locality
-  Location:      [address, ' ', locality]
-  Telephone:
-  Url:
-# In this block the search terms are specified. This example contains 6 queries.
-# A term is specified as a list. This list is transformed to a string.
+input:
+  columns:
+    Id:            CbsPersoonIdentificatie  #unique identifier of a record in the file
+    TradeName:     CpHandelsnaam
+    LegalName:     CpJuridischeNaam
+    Address:       street
+    PostalcodeNum: CpCorrPostcodeNumeriek
+    PostalcodeLtr: CpCorrPostcodeLetters
+    Postalcode:    [CpCorrPostcodeNumeriek, CpCorrPostcodeLetters]
+    Locality:      CpCorrWoonplaats
+    Location:      location
+    Telephone:
+    Url:
+# In this block you must specify the columns returned by your search engine. These columns are used to create the features used by the classifier.
+# Here you must also specify the search queries. This example contains 3 columns returned by de google search engine
+# and 6 queries.
+# A query is specified as a list. This list is transformed to a string.
 # If an element of this list is a column in the 'enterprise' file the value of this column for the current enterprise is used,
 # otherwise this element is treated as a string.
 # For example: If the TradeName of the enterprise is 'Statistics Netherlands', the first query becomes 'Statistics Netherlands contact' 
 search:
-  - {term: [TradeName, ' ', contact]}
-  - {term: [TradeName, ' ', Address, ' ', contact]}
-  - {term: [TradeName, ' ', Postalcode, ' ', contact]}
-  - {term: [Location]}
-  - {term: [TradeName]}
-  - {term: [TradeName, " inanchor:contact"]}
+  columns:
+    - title
+    - snippet
+    - pagemap
+  queries: 
+    - {term: [TradeName, ' ', contact], orTerm: [LegalName]}
+    - {term: [TradeName, ' ', Address, ' ', contact], orTerm: [LegalName]}
+    - {term: [TradeName, ' ', Postalcode, ' ', contact], orTerm: [LegalName]}
+    - {term: [Location]}
+    - {term: [TradeName], orTerm: [LegalName]}
+    - {term: [TradeName, " inanchor:contact"], orTerm: [LegalName]}
 # In this block you must specify the columns used for creating the features used for training and predicting.
 # For this version you have to leave this as is
 features:
@@ -33,5 +41,45 @@ features:
   - Address
   - Postalcode
   - Locality
-  - Location
+# In this block you must specify the classifier you want to train,
+# the hyperparameters you want to set for these classifiers,
+# the features and the target variable to use.
+train:
+  classifier: svm
+  hyperparam:
+    svm:
+      kernel: rbf
+      gamma: 0.5
+      C: 1
+    tree:
+      criterion: entropy
+      max_features: null
+      min_samples_split: 2
+      min_samples_leaf: 20
+      max_depth: null
+    forest:
+      n_estimators: 100
+      max_features: 0.5
+      bootstrap: True
+      max_depth: null
+      criterion: gini
+      min_samples_leaf: 20
+      min_samples_split: 2
+  feature_selection: 
+    [
+      eqSnippetPostalcode_min,eqSnippetPostalcode_max,
+      eqTitlePostalcode_min,eqTitlePostalcode_max,
+      eqPagemapPostalcode_min,eqPagemapPostalcode_max,
+      eqSnippetLocality_min,eqSnippetLocality_max,
+      eqTitleLocality_min,eqTitleLocality_max,
+      eqPagemapLocality_min,eqPagemapLocality_max,
+      eqSnippetTradeName_min,eqSnippetTradeName_max,
+      eqTitleTradeName_min,eqTitleTradeName_max,
+      eqSnippetLegalName_min,eqSnippetLegalName_max,
+      eqTitleLegalName_min,eqTitleLegalName_max,
+      eqSnippetAddress_min,eqSnippetAddress_max,
+      eqTitleAddress_min,eqTitleAddress_max,
+      eqPagemapAddress_min,eqPagemapAddress_max,
+      seq_score_perc, zscore
+    ]
 
