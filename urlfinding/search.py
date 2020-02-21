@@ -11,20 +11,12 @@ from urllib.parse import urlparse
 import requests
 import time
 from urlfinding.googlesearch import GoogleSearch
+from urlfinding.common import get_config
 
 cwd = os.getcwd()
 STREETNAME = 'Streetname'
 COMPANIES = f'{cwd}/data/companies.csv'
 MAPPINGS = f'{cwd}/config/mappings.yml'
-
-def getConfig(file):
-    with open(file,'r') as f:
-        config = load(f, Loader=FullLoader)
-    mapping = {val:key for key, val in config['columns'].items() if (val != None) and (type(val) != list)}
-    computed = {key:val for key, val in config['columns'].items() if type(val) == list}
-    search = config['search']
-    features = config['features']
-    return mapping, computed, search, features
 
 def getFeatures(file, mapping, computed, features):
     feat = pd.read_csv(file, sep=';', dtype=str).fillna('')
@@ -45,9 +37,9 @@ def addFeatures(df, mapping, computed):
             else:
                 df[key] += str(x)
 
-def createTerm(rec, features, search):
+def createTerm(rec, features, search_terms):
     res = ''
-    for x in search:
+    for x in search_terms:
         if x in features:
             if x == STREETNAME:
                 res += str(editStreet(rec[x]))
@@ -84,9 +76,9 @@ def search_item(item, googleSearch):
             result.loc[i, 'Id'] = item['Id']
             result.loc[i, 'queryType'] = item['queryType']
     return result
-    
+
 def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrows=None, config=MAPPINGS):
-    mapping, computed, searchTerms, features = getConfig(config)
+    mapping, computed, searchTerms, features, _ = get_config(config)
     # transform input file to file which can be processed
     if not os.path.isfile(COMPANIES):
         getFeatures(fileIn, mapping, computed, features).to_csv(COMPANIES, sep=';', index=False)
@@ -98,7 +90,7 @@ def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrow
     for index, company in companies.iterrows():
         print(f'\rAt record: {index}', end='')
 
-        for i, term in enumerate(searchTerms):
+        for i, term in enumerate(searchTerms['queries']):
             searchTerm = {
                 'term': createTerm(company, features, term['term']),
                 'orTerm': createTerm(company, features, term.get('orTerm', [])),
@@ -127,14 +119,18 @@ def search(fileIn, googleconfig, blacklist, nrows):
     '''
     This function startes a Google search.
 
-    - `base_file`: A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl) the file must at least include the following columns: id, tradename, legalname, address, postalcode and locality. The column names can be specified in a mapping file (see config/mappings.yml for an example)
+    Parameters:
+    - base_file: A .csv file with a list of enterprises for which you want to find the webaddress.
+    If you want to use the pretrained ML model provided (data/model.pkl) the file must at least include
+    the following columns: id, tradename, legalname, address, postalcode and locality.
+    The column names can be specified in a mapping file (see config/mappings.yml for an example)
+    - googleconfig: This file contains your credentials for using the Google custom search engine API
+    - blacklist: A file containing urls you want to exclude from your search
+    - nrows: Number of enterprises you want to search for. Google provides 100 queries per day for free.
+    For example if for every enterprise 6 queries are performed, then for 10 enterprises 6 * 10 = 60 queries are performed.
+    Every query returns at most 10 search results.
 
-    - `googleconfig`: This file contains your credentials for using the Google custom search engine API
-
-    - `blacklist`: A file containing urls you want to exclude from your search
-
-    - `nrows`: Number of enterprises you want to search for. Google provides 100 queries per day for free. In this example for every enterprise 6 queries are performed, thus for 10 enterprises 6 * 10 = 60 queries. Every query returns at most 10 search results.
-
+    Returns:
     This function creates a file (<YYYYMMDD>searchResult.csv) in the 'data' folder containing the search results, where YYYYMMDD is the current date.
     '''
     with open(googleconfig, 'r') as f:

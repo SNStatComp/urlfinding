@@ -48,7 +48,7 @@ def predict(feature_file, model_file, base_file):
 
     with open(MAPPINGS,'r') as f:
         config = load(f, Loader=FullLoader)
-    recid_base = config['columns']['Id']
+    recid_base = config['input']['columns']['Id']
 
     model = joblib.load(model_file)
     data = pd.read_csv(feature_file, sep=';')

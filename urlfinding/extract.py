@@ -8,18 +8,21 @@ from flatten_json import flatten
 import jellyfish
 from nltk.tokenize import RegexpTokenizer
 import time
+from urlfinding.common import get_config
 
-tokenizer = RegexpTokenizer(r'\w+')
-POPULATION = './data/companies.csv'
+cwd = os.getcwd()
+Tokenizer = RegexpTokenizer(r'\w+')
+POPULATION = f'{cwd}/data/companies.csv'
+MAPPINGS = f'{cwd}/config/mappings.yml'
 
-def read_datafiles(filelist, popFile):
+def read_datafiles(filelist, popFile, nqueries):
     pop = pd.read_csv(popFile, sep=';', dtype=str).fillna('')
     data = pd.DataFrame()
     for dataFile in filelist:
         data = data.append(pd.read_csv(dataFile, sep=';', dtype=str).fillna(''))
     data = data.reset_index(drop=True)
-    data['host'] = data['urlGoogle'].map(getHost)
-    urlsToRemove = getFrequentUrls(data, 60)
+    data['host'] = data['url_se'].map(getHost)
+    urlsToRemove = getFrequentUrls(data, nqueries * 10)
     data = data[~data['host'].isin(urlsToRemove)]
 
     moreUrlsToRemove = getFrequentUrls2(data, 1)
@@ -33,9 +36,9 @@ def isEqualish(s1, s2, threshold):
 
 def commonWordsRow(s1, s2):
     result = []
-    w1 = [w for w in tokenizer.tokenize(s1) if len(w) > 2]
+    w1 = [w for w in Tokenizer.tokenize(s1) if len(w) > 2]
     try:
-        w2 = [w for w in tokenizer.tokenize(s2) if len(w) > 2]
+        w2 = [w for w in Tokenizer.tokenize(s2) if len(w) > 2]
     except:
         w2 = []
     for w in w2:
@@ -53,17 +56,19 @@ def inBlacklist(host, blacklist):
     host = '.'.join(host.split('.')[-2:-1])
     return host in blacklist
 
-def FeaturesFromVariable(data, var):
-    data['eqSnippet' + var] = commonWords(data[['snippet',var]])
-    data['eqTitle' + var] = commonWords(data[['title', var]])
-    if not var in ['TradeName', 'LegalName']:
-        data['eqPagemap' + var] = data['pagemap' + var].apply(lambda x: float(len(x)>0) if x else 0.0)
+def FeaturesFromVariable(data, var, cols_se):
+    for col in cols_se:
+        if col == 'pagemap':
+            if not var in ['TradeName', 'LegalName']:
+                data['eqPagemap' + var] = data['pagemap' + var].apply(lambda x: float(len(x) > 0) if x else 0.0)
+        else:
+            data['eq' + col.title() + var] = commonWords(data[[col, var]])
     return data
 
-def Features(data, vars):
+def Features(data, vars, cols_se):
     for var in vars:
         if var != 'Id':
-            data = FeaturesFromVariable(data, var)
+            data = FeaturesFromVariable(data, var, cols_se)
     return data
 
 def FeaturesFromPagemap(pagemap):
@@ -76,11 +81,11 @@ def FeaturesFromPagemap(pagemap):
             if 'streetaddress' in col:
                 address.append(value.lower())
             elif 'postalcode' in col:
-                postalcode.append(pagemapFlat[col].lower().replace(' ',''))
+                postalcode.append(pagemapFlat[col].lower().replace(' ', ''))
             elif 'locality' in col:
                 locality.append(pagemapFlat[col].lower())
             elif 'telephone' in col:
-                telephone.append(re.sub( r'\D','',pagemapFlat[col]))
+                telephone.append(re.sub(r'\D','',pagemapFlat[col]))
             elif 'url' in col:
                 host = urlparse(pagemapFlat[col]).hostname
                 if host:
@@ -130,50 +135,51 @@ def aggregate_urls(data):
     cols = [x for x in data.columns if (re.match("^eq.+", x)) and (x != 'eqUrl')]
     aggs = {x: ['min', 'mean', 'max'] for x in cols}
     aggs['zscore'] = 'max'
-    if 'eqUrl' in cols:
-        aggs['eqUrl'] = 'max'
     aggs['percentage'] = 'max'
     aggs['seq_score_total'] = 'max'
     aggs['seq_score'] = 'sum'
-    if 'eqUrl' in cols:
-        res = data[['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total', 'eqUrl']+cols].groupby(['Id', 'host']).agg(aggs).reset_index()
+    if 'eqUrl' in data.columns:
+        aggs['eqUrl'] = 'max'
+        sel = ['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total', 'eqUrl'] + cols
     else:
-        res = data[['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total']+cols].groupby(['Id', 'host']).agg(aggs).reset_index()        
+        sel = ['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total'] + cols
+    res = data[sel].groupby(['Id', 'host']).agg(aggs).reset_index()
     res.columns = ['_'.join(tup).rstrip('_') for tup in res.columns.values]
     res['seq_score_perc'] = res['seq_score_sum']/res['seq_score_total_max']
     return res
 
-def extract(date, dataFiles, blacklistFile):
+def extract(date, dataFiles, blacklistFile, config=MAPPINGS):
     '''
-    This function created a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
+    This function creates a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
 
-    - `date`: Used for adding a 'timestamp' to the name of the created feature file
+    Parameters:
+    - date: Used for adding a 'timestamp' to the name of the created feature file
+    - data_files: list of files containing the search results
+    - blacklist: see above
 
-    - `data_files`: list of files containing the search results
-
-    - `blacklist`: see above
-
+    Returns:
     This function creates the feature file <YYYYMMDD>features_agg.csv in the data folder
     '''
-    cwd = os.getcwd()
-    allVars = ['Id', 'TradeName', 'LegalName', 'Address', 'Postalcode', 'Locality', 'Telephone']
+    _, _, search, allVars, _ = get_config(config)
+    allVars += ['Id']
     
     with open(blacklistFile) as f:
         blacklist = f.read().splitlines()
     blacklist = ['.'.join(x.split('.')[:-1]) for x in blacklist]
-    result, sample = read_datafiles(dataFiles, POPULATION)
-    result = result.merge(sample,on='Id')
+    result, sample = read_datafiles(dataFiles, POPULATION, len(search['queries']))
+    result = result.merge(sample, on='Id')
     usedVars = list(set(allVars).intersection(result.columns))
     result[usedVars] = result[usedVars].applymap(str.lower)
-    resultPagemap = pd.DataFrame([FeaturesFromPagemap(row) for row in result['pagemap']])
-    result = pd.concat([result, resultPagemap], axis=1)
-    result = Features(result, usedVars)
+    if 'pagemap' in search['columns']:
+        resultPagemap = pd.DataFrame([FeaturesFromPagemap(row) for row in result['pagemap']])
+        result = pd.concat([result, resultPagemap], axis=1)
+    result = Features(result, usedVars, search['columns'])
     result = result[result['host'].map(lambda x: not inBlacklist(x, blacklist))]
 
     # remove columns not needed for training/predicting
     colsToRemove = sample.columns.tolist()
     colsToRemove.remove('Id')
-    colsToRemove += ['title', 'snippet', 'pagemap']
+    colsToRemove += search['columns']
 
     # if input file is used for training:
     if 'Url' in sample.columns:
@@ -208,11 +214,11 @@ def extract(date, dataFiles, blacklistFile):
         else:
             result['eqUrl'] = [addEqUrl(x, y, '') for x, y in zip(result['host'],result['Url'])]
 
-    result.to_csv(f'{cwd}/data/{date}features.csv', sep=';', index=False)
+    #result.to_csv(f'{cwd}/data/{date}features_searchresult.csv', sep=';', index=False)
     aggs = aggregate_urls(result)
     if 'Url' in sample.columns:
         aggs.rename(columns={'zscore_max': 'zscore', 'eqUrl_max': 'eqUrl', 'percentage_max': 'percentage'}, inplace=True)
     else:
         aggs.rename(columns={'zscore_max': 'zscore', 'percentage_max': 'percentage'}, inplace=True)        
-    aggs.to_csv(f'{cwd}/data/{date}features_agg.csv', sep=';', index=False)
-    print(f'Created feature file {cwd}/data/{date}features_agg.csv')
+    aggs.to_csv(f'{cwd}/data/{date}features.csv', sep=';', index=False)
+    print(f'Created feature file {cwd}/data/{date}features.csv')
