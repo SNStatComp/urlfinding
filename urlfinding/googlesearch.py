@@ -6,7 +6,7 @@ import time
 import os
 
 class GoogleSearch:
-    
+
     def __init__(self, settings):
         self.KEY_VALUE = settings.get('key')
         if not self.KEY_VALUE:
@@ -16,29 +16,24 @@ class GoogleSearch:
             raise Exception('no google search_engine_id provided')
         self.GEOLOCATION = settings.get('geolocation', '')
         self.LANGUAGE = settings.get('language', '')
-        self.cwd = os.getcwd()
-        
+
     def search(self, searchItem):
         self.term = searchItem.get('term')
         self.orTerm = searchItem.get('orTerm', '')
         self.MAXPAGES = searchItem.get('maxPages', 1)
         self._blacklist = [urlparse(url).hostname for url in searchItem.get('blacklist', [])]
-        return(self._processQuery())
-    
+        return self._processQuery()
+
     def excludedSites(self):
-        exclude = ''
-        with open(f'{self.cwd}/data/blacklist.txt') as f:
-            lines = f.read().splitlines()
-        lines = ['-site:' + line for line in lines]
-        exclude = ' '.join(lines)
+        exclude = ' '.join(['-site:' + url for url in self._blacklist])
         return exclude
-    
+
     def _processQuery(self):
         pageNum = 1
         numResults = 10
         stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         service = build("customsearch", "v1", developerKey=self.KEY_VALUE)
-        result = pd.DataFrame(columns=['date', 'seqno', 'query', 'title', 'snippet', 'urlGoogle', 'pagemap'])
+        result = pd.DataFrame(columns=['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap'])
         exclude = self.excludedSites()
 
         while not stop:
@@ -63,13 +58,13 @@ class GoogleSearch:
                         'query': self.term,
                         'title': item.get('title', ''),
                         'snippet': item.get('snippet', ''),
-                        'urlGoogle': item.get('link', ''),
+                        'url_se': item.get('link', ''),
                         'pagemap': json.dumps(item.get('pagemap'))
                     }, ignore_index=True)
             pageNum += 1
             numResults = len(items)
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
-        return(result)
-    
+        return result
+
     def blacklist(self, urls):
         self._blacklist = [urlparse(url).hostname for url in urls]
