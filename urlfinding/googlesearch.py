@@ -21,7 +21,7 @@ class GoogleSearch:
         self.term = searchItem.get('term')
         self.orTerm = searchItem.get('orTerm', '')
         self.MAXPAGES = searchItem.get('maxPages', 1)
-        self._blacklist = [urlparse(url).hostname for url in searchItem.get('blacklist', [])]
+        self._blacklist = searchItem.get('blacklist', [])
         return self._processQuery()
 
     def excludedSites(self):
@@ -66,5 +66,5 @@ class GoogleSearch:
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         return result
 
-    def blacklist(self, urls):
-        self._blacklist = [urlparse(url).hostname for url in urls]
+    # def blacklist(self, urls):
+    #     self._blacklist = [urlparse(url).hostname for url in urls]
