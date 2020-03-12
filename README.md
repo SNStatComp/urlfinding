@@ -119,6 +119,9 @@ There you can specify the classifier to train and the features and hyperparamete
 - `visualize_scores`: If True, shows and saves figures containing performance measures (classification report, confusionmatrix, precision recall curve and ROCAUC curve).
 The figures are saved in the folder 'figures'. (default: False)
 
+## Release notes
+The improvements between different releases have been documented [here](RELEASE_NOTES.txt).
+
 
 ## Limitations
 - The urlfinding returns domains of length 2 only, i.e. no subdomains of cbs.nl
