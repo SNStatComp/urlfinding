@@ -26,7 +26,7 @@ which offers 100 search queries per day for free. Use the paid version if you ne
 
 To get started configure a custom search engine and get your API key from [here](https://developers.google.com/custom-search/v1/overview).
 Make sure to enable the search engine feature 'Search whole internet'.
-Then add the API key and the search engine ID to the `config.yml` file.
+Then add the API key and the search engine ID to the `config.yml`.
 
 ## Install urlfinding
 
@@ -38,7 +38,9 @@ python setup.py install
 ```
 ## Quick start: finding websites of NSIs
 
-The examples folder contains a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
+The examples folder contains a working example.
+One needs two folders, one named `data` for the data, features, blacklist and features and one named `config` for the two configuration files: `config.yml` and `mappings.yml`.
+The example runs in a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
 
 ## API
 
@@ -106,7 +108,16 @@ This function creates the file <base__file>_url.csv in the data folder containin
 
 ### Train
 
-Documentation will follow later.
+`uf.train(date, data_file, save_model, visualize_scores)`
+
+This function trains a classifier accoring to the specification in the `train` block of the mapping file `mappings.yml`.
+There you can specify the classifier to train and the features and hyperparameters to use for this classifier.
+
+- `date`: Used for adding a 'timestamp' to the name of the created model file
+- `data_file`: The file containing the training data
+- `save_model`: If True, saves the model (default: True)
+- `visualize_scores`: If True, shows and saves figures containing performance measures (classification report, confusionmatrix, precision recall curve and ROCAUC curve).
+The figures are saved in the folder 'figures'. (default: False)
 
 
 ## Limitations

@@ -1,0 +1,6 @@
+From v0.0.1 to v0.0.2
+---------------------
+- explained folders needed in README.txt
+- documentation of train function in README.txt
+- restructuring of mappings.yml in 4 blocks: input, search, features and train
+- BUG FIX: reading blacklist from wrong folders
