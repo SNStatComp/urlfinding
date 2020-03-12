@@ -3,15 +3,15 @@
 # If you want to train a model, you need to provide a url, if used for predicting, Url can be left empty
 input:
   columns:
-    Id:            CbsPersoonIdentificatie  #unique identifier of a record in the file
-    TradeName:     CpHandelsnaam
-    LegalName:     CpJuridischeNaam
-    Address:       street
-    PostalcodeNum: CpCorrPostcodeNumeriek
-    PostalcodeLtr: CpCorrPostcodeLetters
-    Postalcode:    [CpCorrPostcodeNumeriek, CpCorrPostcodeLetters]
-    Locality:      CpCorrWoonplaats
-    Location:      location
+    Id:            id  #unique identifier of a record in the file
+    TradeName:     tradename
+    LegalName:     legalname
+    Address:       address
+    PostalcodeNum:
+    PostalcodeLtr:
+    Postalcode:    postalcode
+    Locality:      locality
+    Location:      [address, ' ', locality]
     Telephone:
     Url:
 # In this block you must specify the columns returned by your search engine. These columns are used to create the features used by the classifier.
