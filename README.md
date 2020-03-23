@@ -1,8 +1,6 @@
 # urlfinding
 Generic software for finding websites of enterprises using a search engine and machine learning.
 
-This repo is still work in progress, i.e. the training function will be documented later.
-
 ## Introduction
 This repository contains the software that was used for research on finding enterprise websites.
 For a detailed description of the methodology implemented we refer to the
