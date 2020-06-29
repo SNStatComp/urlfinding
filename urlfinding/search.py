@@ -11,6 +11,7 @@ from urllib.parse import urlparse
 import requests
 import time
 from urlfinding.googlesearch import GoogleSearch
+from urlfinding.duckduckgo import DuckSearch
 from urlfinding.common import get_config
 
 cwd = os.getcwd()
@@ -63,10 +64,11 @@ def editStreet(name):
         location = ''
     return location
 
-def search_item(item, googleSearch):
+def search_item(item, search_engine):
     result = []
+    message = ''
     if item['term']:
-        result = googleSearch.search({
+        result, message = search_engine.search({
             'term': item['term'],
             'orTerm': item['orTerm'],
             'blacklist': item['blacklist'],
@@ -75,9 +77,11 @@ def search_item(item, googleSearch):
         for i, _ in result.iterrows():
             result.loc[i, 'Id'] = item['Id']
             result.loc[i, 'queryType'] = item['queryType']
-    return result
+    else:
+        message = 'No query specified'
+    return result, message
 
-def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrows=None, config=MAPPINGS):
+def main(fileIn, fileOut, blacklist, log, search_engine, fstart, skiprows=0, nrows=None, config=MAPPINGS):
     mapping, computed, searchTerms, features, _ = get_config(config)
     # transform input file to file which can be processed
     if not os.path.isfile(COMPANIES):
@@ -98,7 +102,7 @@ def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrow
                 'Id': company['Id'],
                 'queryType': i
             }
-            res = search_item(searchTerm, googleSearch)
+            res, message = search_item(searchTerm, search_engine)
             if len(res) > 0:
                 if not os.path.isfile(fileOut):
                     res.to_csv(fileOut, sep=';', index=False, float_format='%.0f')
@@ -106,16 +110,18 @@ def main(fileIn, fileOut, blacklist, log, googleSearch, fstart, skiprows=0, nrow
                     res.to_csv(fileOut, sep=';', mode='a', header=False, index=False, float_format='%.0f')
             else:
                 #log company with no results
+                missed = company.to_frame().T
+                missed['reason'] = message
                 if not os.path.isfile(log):
-                    company.to_frame().T.to_csv(log, sep=';', index=False, float_format='%.0f')
+                    missed.to_csv(log, sep=';', index=False, float_format='%.0f')
                 else:
-                    company.to_frame().T.to_csv(log, sep=';', mode='a', header=False, index=False, float_format='%.0f')
+                    missed.to_csv(log, sep=';', mode='a', header=False, index=False, float_format='%.0f')
             time.sleep(1)
         skiprows += 1
         fstart.seek(0)
         fstart.write(str(skiprows))
 
-def search(fileIn, googleconfig, blacklist, nrows):
+def search(fileIn, config, blacklist, nrows):
     '''
     This function startes a Google search.
 
@@ -133,9 +139,16 @@ def search(fileIn, googleconfig, blacklist, nrows):
     Returns:
     This function creates a file (<YYYYMMDD>searchResult.csv) in the 'data' folder containing the search results, where YYYYMMDD is the current date.
     '''
-    with open(googleconfig, 'r') as f:
+    with open(config, 'r') as f:
         settings = load(f, Loader=FullLoader)
-        googleSearch = GoogleSearch(settings)
+        engine = settings.get('search_engine', 'google')
+        if engine == 'google':
+            search_engine = GoogleSearch(settings)
+        elif engine == 'duckduckgo':
+            search_engine = DuckSearch(settings)
+        else:
+            print('You must specify a search_engine. Possible values: "google" or "duckduckgo"')
+            raise
 
     with open(blacklist, 'r') as f:
         blacklist = f.read().splitlines()
@@ -152,6 +165,7 @@ def search(fileIn, googleconfig, blacklist, nrows):
     fileOut = f'{cwd}/data/{today}searchResult.csv'
     log = f'{cwd}/data/missed_companies.csv'
 
-    main(fileIn, fileOut, blacklist, log, googleSearch, fstart, maxrownum, nrows)
+    main(fileIn, fileOut, blacklist, log, search_engine, fstart, maxrownum, nrows)
     fstart.close()
+    search_engine.quit()
     print(f'\nSearchresults saved in {fileOut}')

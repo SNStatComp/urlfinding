@@ -1,3 +1,5 @@
+search_engine:  google # Possible values [google, duckduckgo]
+browser:        firefox # only needed for search_engine = duckduckgo. Possible values: [firefox, chrome]
 key:            # your google api key here
 searchengineid: # your search engine id here
 geolocation:    nl # country of your google host here eg. nl. Default: ''

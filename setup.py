@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="urlfinding",
-    version="0.0.1",
+    version="0.0.3",
     author="Dick Windmeijer",
     author_email="dwnr@cbs.nl",
     description="Generic software for finding websites of enterprises using a search engine and machine learning.",
@@ -18,9 +18,11 @@ setuptools.setup(
         "flatten_json",
         "jellyfish",
         "pycm",
-        "yellowbrick"
+        "yellowbrick",
+        "selenium",
+        "selenium-wire",
+        "pyderman"
 	],
-	#py_modules=['urlfinding', 'urlfinding.googlesearch', 'urlfinding.scrape', 'urlfinding.process', 'urlfinding.predict', 'urlfinding.train'],
     classifiers=[
         "Development Status :: 4 - Beta"
         "Programming Language :: Python :: 3",

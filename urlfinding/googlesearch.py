@@ -18,11 +18,12 @@ class GoogleSearch:
         self.LANGUAGE = settings.get('language', '')
 
     def search(self, searchItem):
+        self.message = ''
         self.term = searchItem.get('term')
         self.orTerm = searchItem.get('orTerm', '')
         self.MAXPAGES = searchItem.get('maxPages', 1)
         self._blacklist = searchItem.get('blacklist', [])
-        return self._processQuery()
+        return self._processQuery(), self.message
 
     def excludedSites(self):
         exclude = ' '.join(['-site:' + url for url in self._blacklist])
@@ -64,7 +65,10 @@ class GoogleSearch:
             pageNum += 1
             numResults = len(items)
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
+        if len(result) == 0:
+            self.message = 'No results returned'
         return result
+    
+    def quit(self):
+        pass
 
-    # def blacklist(self, urls):
-    #     self._blacklist = [urlparse(url).hostname for url in urls]
