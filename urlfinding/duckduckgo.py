@@ -3,31 +3,19 @@ import json
 import time
 import os
 import re
-import pyderman
-from urllib.parse import urlparse
-from seleniumwire import webdriver
-from selenium.webdriver.firefox.options import Options as FirefoxOptions
-from selenium.webdriver.chrome.options import Options as ChromeOptions
+import random
+import requests
+from urllib import parse
 
 class DuckSearch:
 
     def __init__(self, settings):
-        self.GEOLOCATION = settings.get('geolocation', '')
-        browser = settings.get('browser', 'firefox')
-        
-        if browser == 'firefox':
-            options = FirefoxOptions()
-            options.headless = True
-            path = pyderman.install(browser=pyderman.firefox)
-            self.driver = webdriver.Firefox(executable_path=path, options=options, seleniumwire_options={'max_threads': 3})
-        if browser == 'chrome':
-            options = ChromeOptions()
-            options.headless = True
-            path = pyderman.install(browser=pyderman.chrome)
-            self.driver = webdriver.Chrome(path, options=options, seleniumwire_options={'max_threads': 3})
-
-        self.last_term = ''
-        self.last_response = ''
+        self.domain = 'https://duckduckgo.com'
+        self.language = settings.get('DDGlanguage', 'en-us')
+        self.headers = {
+            'User-Agent': settings.get('DDGuser-agent', ''),
+            'Cache-Control': 'no-cache'
+        }
 
     def search(self, searchItem):
         self.message = ''
@@ -36,38 +24,21 @@ class DuckSearch:
         return self._processQuery(), self.message
 
     def _get_response(self):
-#         try:
-#             del self.driver.requests
-#         except:
-#             pass
-        self.driver.scopes = ['.*duckduckgo\.com/.*\.js.*']
-        self.driver.get(f'https://duckduckgo.com/?q={self.term}&t=hj&ia=web')
-#        request = None
-        try:
-            request = self.driver.wait_for_request('https://duckduckgo.com/d.js', timeout=30)
-        except:
-            request = None
-            for r in self.driver.requests:
-                if 'd.js' in r.path:
-                    request = r
-                    break
-        
-        if request:
-            if request.response.body:
-                self.last_response = request.response.body.decode('utf-8', 'ignore')
-                self.last_term = self.term
-                self.response = request.response.body.decode('utf-8', 'ignore')
+        query = parse.quote(self.term)
+        url = f'{self.domain}/local.js?q={query}&cb=DDG.duckbar.add_local&tg=maps_places&l={self.language}&sf=low'
+        req =requests.get(url, headers=self.headers)
+        m = re.search(r'DDG.duckbar.add_local\((.*)\)', req.text)
+        if m:
+            vqd = list(json.loads(m.group(1))['vqd'].values())[0]
+            if vqd:
+                url = f'{self.domain}/d.js?q={query}&t=D&l=wt-wt&s=0&a=hk&ss_mkt=us&vqd={vqd}&p_ent=&ex=-1&sp=0'
+                time.sleep(random.uniform(1,3))
+                self.response = requests.get(url, headers=self.headers).text
             else:
-                self.last_term = self.term
-                self.last_response = ''
                 self.response = ''
-                self.message = str(request.response.status_code) + ': ' + request.response.reason
         else:
-            self.message = 'No response from query'
-            if self.last_term == self.term:
-                self.response = self.last_response
-            else:
-                self.response = ''
+            self.response = ''
+        time.sleep(6)
 
     def _parse_response(self):
         columns = ['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap']
@@ -100,6 +71,3 @@ class DuckSearch:
             self.term = self.term.replace(' ', '+') + ' ' + exclude
         self._get_response()
         return self._parse_response()
-    
-    def quit(self):
-        self.driver.quit()

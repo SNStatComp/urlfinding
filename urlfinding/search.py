@@ -167,5 +167,4 @@ def search(fileIn, config, blacklist, nrows):
 
     main(fileIn, fileOut, blacklist, log, search_engine, fstart, maxrownum, nrows)
     fstart.close()
-    search_engine.quit()
     print(f'\nSearchresults saved in {fileOut}')

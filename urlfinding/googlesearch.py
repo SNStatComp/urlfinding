@@ -68,7 +68,4 @@ class GoogleSearch:
         if len(result) == 0:
             self.message = 'No results returned'
         return result
-    
-    def quit(self):
-        pass
 

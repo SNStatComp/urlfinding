@@ -1,7 +1,7 @@
 search_engine:  google # Possible values [google, duckduckgo]
-browser:        firefox # only needed for search_engine = duckduckgo. Possible values: [firefox, chrome]
 key:            # your google api key here
 searchengineid: # your search engine id here
 geolocation:    nl # country of your google host here eg. nl. Default: ''
 language:       nl # restricts the search to documents in particular language eg. nl. Default: ''
-
+DDGlanguage:    nl-nl 
+DDGuser-agent:  Mozilla/5.0 (Macintosh; Intel Mac OS X 10.13; rv:77.0) Gecko/20100101 Firefox/77.0
