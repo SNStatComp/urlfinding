@@ -1,4 +1,3 @@
-import re
 import os
 import pandas as pd
 import joblib
@@ -7,15 +6,13 @@ import seaborn as sns
 from sklearn.model_selection import train_test_split
 from yellowbrick.classifier import ClassificationReport, ConfusionMatrix, \
     ROCAUC, PrecisionRecallCurve
-from yaml import load, FullLoader
-from urlfinding.common import get_config
+from urlfinding.url_finder import UrlFinder
 
 sns.set()
 cwd = os.getcwd()
-MAPPINGS = f'{cwd}/config/mappings.yml'
 POPULATION = f'{cwd}/data/companies.csv'
 
-def createTrainTest(data, pop, feat):
+def create_train_test(data, pop, feat):
     id = 'Id'
     target = 'eqUrl'
     bidX = pop.loc[:, [id]]
@@ -30,26 +27,26 @@ def createTrainTest(data, pop, feat):
     y_test = test.loc[:, target]
     return X_train, y_train, X_test, y_test
 
-def initModel(mla, hyperparam, date):
-    if mla == 'nb':
+def init_model(classifier, hyperparam, date):
+    if classifier == 'nb':
         from sklearn.naive_bayes import GaussianNB
         model = GaussianNB()
-    elif mla == 'forest':
+    elif classifier == 'forest':
         from sklearn.ensemble import RandomForestClassifier
         model = RandomForestClassifier(random_state=0)
         model.set_params(**hyperparam)
-    elif mla == 'tree':
+    elif classifier == 'tree':
         from sklearn.tree import DecisionTreeClassifier
         model = DecisionTreeClassifier(random_state=0)
         model.set_params(**hyperparam)
-    elif mla == 'svm':
+    elif classifier == 'svm':
         from sklearn.svm import SVC
         model = SVC(random_state=0, probability=True)
         model.set_params(**hyperparam)
     return model
 
-def createModel(date, X_train, y_train, mla, hyperparam, save_model=True):
-    model = initModel(mla, hyperparam, date)
+def create_model(date, X_train, y_train, mla, hyperparam, save_model=True):
+    model = init_model(mla, hyperparam, date)
     model.fit(X_train, y_train)
     result = {'model': model, 'model_features': X_train.columns.tolist()}
     if save_model:
@@ -120,7 +117,7 @@ def visualize_results(date, X_train, y_train, X_test, y_test, model):
 #     target = 'eqUrl'
 #     return feat, target
 
-def train(date, dataFile, save_model=True, visualize_scores=False, config=MAPPINGS):
+def train(date, dataFile, save_model=True, visualize_scores=False, config=UrlFinder.MAPPINGS):
     '''
     This function trains a classifier, saves the trained model and shows some performance figures.
     Before using this function the classifier to train and the features and hyperparameters to use for this classifier
@@ -132,12 +129,14 @@ def train(date, dataFile, save_model=True, visualize_scores=False, config=MAPPIN
     - visualize_scores: If True, shows and saves figures containing performance measures (classification report, confusionmatrix,
     precision recall curve and ROCAUC curve). The figures are saved in the folder 'figures'. (default: False)
     '''
-    pop = pd.read_csv(POPULATION, sep=';')
+    population = pd.read_csv(POPULATION, sep=';')
     data = pd.read_csv(dataFile, sep=';')
-    _, _, _, _, train_param = get_config(config)
-    mla = train_param['classifier']
-    feat, hyperparam = train_param['feature_selection'], train_param['hyperparam'][mla]
-    X_train, y_train, X_test, y_test = createTrainTest(data, pop, feat)
-    model = createModel(date, X_train, y_train, mla, hyperparam, save_model=save_model)
+    mappings_config = UrlFinder.get_mappings_config(config)
+    train_param = mappings_config.train
+
+    classifier = train_param['classifier']
+    features, hyperparam = train_param['feature_selection'], train_param['hyperparam'][classifier]
+    x_train, y_train, x_test, y_test = create_train_test(data, population, features)
+    model = create_model(date, x_train, y_train, classifier, hyperparam, save_model=save_model)
     if visualize_scores:
-        visualize_results(date, X_train, y_train, X_test, y_test, model['model'])
+        visualize_results(date, x_train, y_train, x_test, y_test, model['model'])

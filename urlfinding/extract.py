@@ -1,5 +1,4 @@
 import pandas as pd
-from pandas.io.json import json_normalize
 import re
 from urllib.parse import urlparse
 import json
@@ -7,13 +6,11 @@ import os
 from flatten_json import flatten
 import jellyfish
 from nltk.tokenize import RegexpTokenizer
-import time
-from urlfinding.common import get_config
+from urlfinding.url_finder import UrlFinder
 
 cwd = os.getcwd()
 Tokenizer = RegexpTokenizer(r'\w+')
 POPULATION = f'{cwd}/data/companies.csv'
-MAPPINGS = f'{cwd}/config/mappings.yml'
 
 def read_datafiles(filelist, popFile, nqueries):
     pop = pd.read_csv(popFile, sep=';', dtype=str).fillna('')
@@ -148,7 +145,7 @@ def aggregate_urls(data):
     res['seq_score_perc'] = res['seq_score_sum']/res['seq_score_total_max']
     return res
 
-def extract(date, dataFiles, blacklistFile, config=MAPPINGS):
+def extract(date, dataFiles, blacklistFile, config=UrlFinder.MAPPINGS):
     '''
     This function creates a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
 
@@ -160,7 +157,10 @@ def extract(date, dataFiles, blacklistFile, config=MAPPINGS):
     Returns:
     This function creates the feature file <YYYYMMDD>features_agg.csv in the data folder
     '''
-    _, _, search, allVars, _ = get_config(config)
+    mappings = UrlFinder.get_mappings_config(config)
+    search = mappings.search
+    allVars = mappings.features
+
     allVars += ['Id']
     
     with open(blacklistFile) as f:

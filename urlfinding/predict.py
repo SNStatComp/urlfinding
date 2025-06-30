@@ -1,12 +1,11 @@
 import pandas as pd
 import joblib
-from sklearn.svm import SVC
-from yaml import load, FullLoader
+import yaml
 import os
 
+from url_finder import UrlFinder
+
 cwd = os.getcwd()
-MAPPINGS = f'{cwd}/config/mappings.yml'
-POPULATION = './data/companies.csv'
 
 def get_prediction(model, data, pop):
     try:
@@ -46,13 +45,13 @@ def predict(feature_file, model_file, base_file):
     - `pTrue`: An indicator showing the confidence of the prediction, a number between 0 and 1 where 0: almost certain not the url and 1: almost certain the right url. eqPred is derived from pTrue: if pTrue>0.5 then eqPred=True else eqPred=False
     '''
 
-    with open(MAPPINGS,'r') as f:
-        config = load(f, Loader=FullLoader)
+    with open(UrlFinder.MAPPINGS,'r') as f:
+        config = yaml.safe_load(f)
     recid_base = config['input']['columns']['Id']
 
     model = joblib.load(model_file)
     data = pd.read_csv(feature_file, sep=';')
-    pop = pd.read_csv(POPULATION, sep=';')
+    pop = pd.read_csv(UrlFinder.POPULATION, sep=';')
     result, _ = get_prediction(model, data, pop)
 
     inp = pd.read_csv(base_file, sep=';')
