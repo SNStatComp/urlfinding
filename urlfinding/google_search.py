@@ -6,6 +6,7 @@ import time
 from urlfinding.search_engine import SearchEngine
 from typing import Tuple
 
+@SearchEngine.register("google")
 class GoogleSearch(SearchEngine):
 
     def __init__(self, settings):
@@ -25,14 +26,14 @@ class GoogleSearch(SearchEngine):
         self.MAXPAGES = search_item.get('maxPages', 1)
         self._blacklist = search_item.get('blacklist', [])
 
-    def _processQuery(self) -> Tuple[pd.DataFrame, str]:
+    def _process_query(self) -> Tuple[pd.DataFrame, str]:
         message = ''
         pageNum = 1
         numResults = 10
         stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         service = build("customsearch", "v1", developerKey=self.KEY_VALUE)
         result = pd.DataFrame(columns=self.output_columns)
-        exclude = self.excludedSites()
+        exclude = self.excluded_sites()
 
         while not stop:
             if exclude:

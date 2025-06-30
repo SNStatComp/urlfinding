@@ -1,14 +1,19 @@
 from abc import  ABC, abstractmethod
 import pandas as pd
 from typing import Tuple
+import yaml
+
 
 class SearchEngine(ABC):
+    _registry = {}
 
     def __init__(self, settings):
+        self.settings = settings
         self._blacklist = []
-        self.columns = ['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap']
+        self.output_columns = ['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap']
+
     @abstractmethod
-    def _processQuery(self) -> Tuple[pd.DataFrame, str]:
+    def _process_query(self) -> Tuple[pd.DataFrame, str]:
         raise NotImplementedError       
     
     @abstractmethod
@@ -17,7 +22,33 @@ class SearchEngine(ABC):
 
     def search(self, search_item) -> Tuple[pd.DataFrame, str]:
         self._load_search_item(search_item)
-        return self._processQuery()
+        return self._process_query()
     
-    def excludedSites(self) -> str:
+    def excluded_sites(self) -> str:
         return ' '.join(['-site:' + url for url in self._blacklist])
+    
+    def available_engines(self):
+        return self._registry
+
+    @classmethod
+    def register(cls, name: str):
+        """Decorator function to add subclasses to the registry with a given name
+
+        Args:
+            name (str): Name by which the subclass will be referenced in the dictionary.
+        """
+        def wrapper(subclass):
+            cls._registry[name.lower()] = subclass
+            return subclass
+        return wrapper
+    
+    @classmethod
+    def from_config(cls, config_path: str) -> "SearchEngine":
+        with open(config_path, 'r') as f:
+            settings = yaml.safe_load(f)
+        engine = settings.get('search_engine', 'google')
+        try:
+            return cls._registry[engine](settings)
+        except KeyError:
+            raise ValueError(f"Unknown search engine: {engine}")
+    

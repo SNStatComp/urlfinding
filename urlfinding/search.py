@@ -6,52 +6,55 @@ import pandas as pd
 import re
 import os
 import time
-from urlfinding.googlesearch import GoogleSearch
-from urlfinding.duckduckgo import DuckSearch
+from urlfinding.google_search import GoogleSearch
+from urlfinding.search_engine import SearchEngine
+from urlfinding.duck_search import DuckSearch
 from urlfinding.url_finder import UrlFinder
 from typing import List, Dict
+import logging
 
 class Search:
     STREETNAME = 'Streetname'
 
     def __init__(self, 
-                 population_path:str, 
-                 mappings_path: str, 
-                 current_working_directory: str = None, 
+                 population_path:str = None, 
+                 mappings_path: str = None, 
+                 working_directory: str = None, 
                  output_path: str = None,
                  log_path: str = None):
-        self.population_path = population_path
-        self.mappings_path = mappings_path         
-        self.cwd = current_working_directory or os.getcwd()
+        self.population_path = population_path or UrlFinder.POPULATION
+        self.mappings_config = UrlFinder.get_mappings_config(mappings_path or UrlFinder.MAPPINGS)     
+        self.working_directory = working_directory or UrlFinder.CWD
         
         if output_path:
             self.output_path = output_path
         else:
             today = time.strftime('%Y%m%d')
-            self.output_path = output_path or f'{self.cwd}/data/{today}searchResult.csv'
+            self.output_path = output_path or f'{self.working_directory}/data/{today}searchResult.csv'
         
-        self.log_path = log_path or f'{self.cwd}/data/missed_companies.csv'
+        self.log_path = log_path or f'{self.working_directory}/data/missed_companies.csv'
 
-        self.maxrownum = f'{self.cwd}/maxrownum'
+        self.maxrownum = f'{self.working_directory}/maxrownum'
+
+    
 
     def get_features(self, file:str, mapping: Dict[str, str], computed: Dict[str, List[str]], features: List[str]):
         feat = pd.read_csv(file, sep=';', dtype=str).fillna('')
         feat.rename(columns=mapping, inplace=True)
-        self.add_features(feat, mapping, computed)
-        feat = feat[['Id'] + features]
-        return feat
-
-    def add_features(self, df:pd.DataFrame, mapping: Dict[str, str], computed: Dict[str, List[str]]):
+        
         for key, val in computed.items():
-            df[key] = ''
+            feat[key] = ''
             for x in val:
                 if mapping.get(x):
                     if mapping[x] == Search.STREETNAME:
-                        df[key] += df[mapping[x]].apply(lambda x: self.edit_street(x))
+                        feat[key] += feat[mapping[x]].apply(lambda x: self.edit_street(x))
                     else:
-                        df[key] += df[mapping[x]]
+                        feat[key] += feat[mapping[x]]
                 else:
-                    df[key] += str(x)
+                    feat[key] += str(x)
+
+        feat = feat[['Id'] + features]
+        return feat
 
     def create_term(self, record, features: List[str], search_terms) -> str:
         res = ''
@@ -98,26 +101,44 @@ class Search:
 
     @staticmethod
     def append_to_csv(df: pd.DataFrame, output_path: str, sep=';'):
+        """Helper function to append rows of a DataFrame to an existing csv file
+
+        Args:
+            df (pd.DataFrame): Dataframes with rows to be added to the output file
+            output_path (str): Path to the output file
+            sep (str, optional): Seperator/delimitr of the csv file. Defaults to ';'.
+        """
         if not os.path.isfile(output_path):
             df.to_csv(output_path, sep=sep, index=False, float_format='%.0f')
         else:
             df.to_csv(output_path, sep=sep, mode='a', header=False, index=False, float_format='%.0f')
 
-    def _process(self, 
-                 input_path: str, 
+    def create_population(self, input_urls_path: str, override_population:bool=True):
+        """
+        If you want to use the pretrained ML model provided (data/model.pkl) the file must at least include
+        the following columns: id, tradename, legalname, address, postalcode and locality.
+        The column names can be specified in a mapping file (see config/mappings.yml for an example)
+        Args:
+            input_urls_path (str): A .csv file with a list of enterprises for which you want to find the webaddress.
+            override_population (bool, optional): If Truem always override the population file. Defaults to True.
+        """
+        # transform input file to file which can be processed
+        if override_population or not os.path.isfile(self.population_path):
+            self.get_features(input_urls_path, 
+                              self.mappings_config.mapping, 
+                              self.mappings_config.computed, 
+                              self.mappings_config.features).to_csv(self.population_path, sep=';', index=False)
+        else:
+            logging.info("Population already exists. If you want to override it, set override_population=True")
+        
+    def _process(self,  
                  blacklist: List[str], 
-                 search_engine, 
+                 search_engine: SearchEngine, 
                  maxrownum_f, 
                  skip_rows:int=0, 
-                 nrows:int=None, 
-                 config=UrlFinder.MAPPINGS):
+                 nrows:int=None):
         
-        mappings_config = UrlFinder.get_mappings_config(config)
-        features = mappings_config.features
-
-        # transform input file to file which can be processed
-        if not os.path.isfile(self.population_path):
-            self.get_features(input_path, mappings_config.mapping, mappings_config.computed, features).to_csv(self.population_path, sep=';', index=False)
+        features = self.mappings_config.features
 
         skip = 0 if skip_rows == 0 else range(1, skip_rows + 1)
 
@@ -126,7 +147,7 @@ class Search:
         for index, company in companies.iterrows():
             print(f'\rAt record: {index}', end='')
 
-            for i, term in enumerate(mappings_config.search_terms['queries']):
+            for i, term in enumerate(self.mappings_config.search_terms['queries']):
                 search_term = {
                     'term': self.create_term(company, features, term['term']),
                     'orTerm': self.create_term(company, features, term.get('orTerm', [])),
@@ -134,9 +155,9 @@ class Search:
                     'Id': company['Id'],
                     'queryType': i
                 }
-                res, message = self.search_item(search_term, search_engine)
-                if len(res) > 0:
-                    self.append_to_csv(res, self.output_path)
+                result, message = self.search_item(search_term, search_engine)
+                if len(result) > 0:
+                    self.append_to_csv(result, self.output_path)
                 else:
                     #log company with no results
                     missed = company.to_frame().T
@@ -147,28 +168,12 @@ class Search:
             maxrownum_f.seek(0)
             maxrownum_f.write(str(skip_rows))
 
-    def _load_search_engine_config(self, config_path: str):
-        with open(config_path, 'r') as f:
-            settings = yaml.safe_load(f)
-            engine = settings.get('search_engine', 'google')
-            if engine == 'google':
-                return GoogleSearch(settings)
-            elif engine == 'duckduckgo':
-                return DuckSearch(settings)
-            else:
-                print('You must specify a search_engine. Possible values: "google" or "duckduckgo"')
-                raise
-
-    def search(self, input_file: str, config_path: str, blacklist_path: str, nrows: int):
+    def search(self, search_engine_config_path: str, blacklist_path: str, nrows: int):
         '''
-        This function startes a Google search.
+        This function startes a Search.
 
         Parameters:
-        - base_file: A .csv file with a list of enterprises for which you want to find the webaddress.
-        If you want to use the pretrained ML model provided (data/model.pkl) the file must at least include
-        the following columns: id, tradename, legalname, address, postalcode and locality.
-        The column names can be specified in a mapping file (see config/mappings.yml for an example)
-        - googleconfig: This file contains your credentials for using the Google custom search engine API
+        - search_engine_config_path: This file contains your credentials for using the Google custom search engine API
         - blacklist_path: A file containing urls you want to exclude from your search
         - nrows: Number of enterprises you want to search for. Google provides 100 queries per day for free.
         For example if for every enterprise 6 queries are performed, then for 10 enterprises 6 * 10 = 60 queries are performed.
@@ -177,7 +182,7 @@ class Search:
         Returns:
         This function creates a file (<YYYYMMDD>searchResult.csv) in the 'data' folder containing the search results, where YYYYMMDD is the current date.
         '''
-        search_engine = self._load_search_engine_config(config_path)
+        search_engine = SearchEngine.from_config(search_engine_config_path)
 
         with open(blacklist_path, 'r') as f:
             blacklist = f.read().splitlines()
@@ -185,8 +190,8 @@ class Search:
         if not os.path.isfile(self.maxrownum):
             with open(self.maxrownum, 'w+') as f:
                 f.write('0')        
-        
+
         with open(self.maxrownum, 'r+') as maxrownum_f:
             skip_rows = int(maxrownum_f.readline())
-            self._process(input_file, blacklist, search_engine, maxrownum_f, skip_rows, nrows)
+            self._process(blacklist, search_engine, maxrownum_f, skip_rows, nrows)
         print(f'\nSearchresults saved in {self.output_path}')

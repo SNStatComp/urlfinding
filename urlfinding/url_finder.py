@@ -25,9 +25,9 @@ class UrlFinderConfig:
     ddg_user_agent: str = Field(alias='DDGuser-agent')
 
 class UrlFinder:
-    cwd = os.getcwd()
-    MAPPINGS = f'{cwd}/config/mappings.yml'
-    POPULATION = f'{cwd}/data/companies.csv'
+    CWD = os.getcwd()
+    MAPPINGS = f'{CWD}/config/mappings.yml'
+    POPULATION = f'{CWD}/data/companies.csv'
     
     def __init__(self, url_finder_config_path: str = None, mappings_path: str = None, population_path: str = None):
         with open(url_finder_config_path, "r") as f:

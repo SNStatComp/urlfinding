@@ -8,6 +8,7 @@ from urllib import parse
 from urlfinding.search_engine import SearchEngine
 from typing import Tuple
 
+@SearchEngine.register("duckduckgo")
 class DuckSearch(SearchEngine):
 
     def __init__(self, settings):
@@ -60,8 +61,8 @@ class DuckSearch(SearchEngine):
             message = 'Expected javascript file (d.js) not found.'
             return pd.DataFrame(columns=self.output_columns), message
     
-    def _processQuery(self) -> Tuple[pd.DataFrame, str]:
-        exclude = self.excludedSites()
+    def _process_query(self) -> Tuple[pd.DataFrame, str]:
+        exclude = self.excluded_sites()
         if exclude:
             self.term = self.term.replace(' ', '+') + ' ' + exclude
         response = self._get_response()
