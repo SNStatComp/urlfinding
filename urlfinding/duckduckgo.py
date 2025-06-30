@@ -1,15 +1,17 @@
 import pandas as pd
 import json
 import time
-import os
 import re
 import random
 import requests
 from urllib import parse
+from urlfinding.search_engine import SearchEngine
+from typing import Tuple
 
-class DuckSearch:
+class DuckSearch(SearchEngine):
 
     def __init__(self, settings):
+        super().__init__()
         self.domain = 'https://duckduckgo.com'
         self.language = settings.get('DDGlanguage', 'en-us')
         self.headers = {
@@ -17,11 +19,9 @@ class DuckSearch:
             'Cache-Control': 'no-cache'
         }
 
-    def search(self, searchItem):
-        self.message = ''
-        self.term = searchItem.get('term')
-        self._blacklist = searchItem.get('blacklist', [])
-        return self._processQuery(), self.message
+    def _load_search_item(self, search_item):
+        self.term = search_item.get('term')
+        self._blacklist = search_item.get('blacklist', [])
 
     def _get_response(self):
         query = parse.quote(self.term)
@@ -33,18 +33,17 @@ class DuckSearch:
             if vqd:
                 url = f'{self.domain}/d.js?q={query}&t=D&l=wt-wt&s=0&a=hk&ss_mkt=us&vqd={vqd}&p_ent=&ex=-1&sp=0'
                 time.sleep(random.uniform(1,3))
-                self.response = requests.get(url, headers=self.headers).text
+                return requests.get(url, headers=self.headers).text
             else:
-                self.response = ''
+                return ''
         else:
-            self.response = ''
-        time.sleep(6)
+            return ''
 
-    def _parse_response(self):
-        columns = ['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap']
-        m = re.search(r"DDG\.pageLayout\.load\('d',(\[.*\])\)", self.response)
-        if m:
-            result = pd.DataFrame(json.loads(m.group(1)))[['u', 't', 'a']]
+    def parse_response(self, response) -> Tuple[pd.DataFrame, str]:
+        message = ''
+        match = re.search(r"DDG\.pageLayout\.load\('d',(\[.*\])\)", response)
+        if match:
+            result = pd.DataFrame(json.loads(match.group(1)))[['u', 't', 'a']]
             if 'l' in result.columns:
                 res0 = pd.DataFrame()
                 for r in result.loc[result[['l']].any(axis=1), 'l']:
@@ -56,18 +55,16 @@ class DuckSearch:
             result['date'] = time.strftime('%Y%m%d')
             result['query'] = self.term
             result['pagemap'] = '' # return this column because of compatibility with googlsearch.py
-            return result[pd.notnull(result.url_se)][columns]
+            return result[pd.notnull(result.url_se)][self.output_columns], message
         else:
-            self.message = 'Expected javascript file (d.js) not found.'
-            return pd.DataFrame(columns=columns)
+            message = 'Expected javascript file (d.js) not found.'
+            return pd.DataFrame(columns=self.output_columns), message
     
-    def excludedSites(self):
-        exclude = ' '.join(['-site:' + url for url in self._blacklist])
-        return exclude
-
-    def _processQuery(self):
+    def _processQuery(self) -> Tuple[pd.DataFrame, str]:
         exclude = self.excludedSites()
         if exclude:
             self.term = self.term.replace(' ', '+') + ' ' + exclude
-        self._get_response()
-        return self._parse_response()
+        response = self._get_response()
+        # Not sure why we sleep here, assuming rate-limiting... legacy code
+        time.sleep(6)
+        return self.parse_response(response)

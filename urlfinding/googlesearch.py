@@ -3,11 +3,13 @@ from urllib.parse import urlparse
 import pandas as pd
 import json
 import time
-import os
+from urlfinding.search_engine import SearchEngine
+from typing import Tuple
 
-class GoogleSearch:
+class GoogleSearch(SearchEngine):
 
     def __init__(self, settings):
+        super().__init__()
         self.KEY_VALUE = settings.get('key')
         if not self.KEY_VALUE:
             raise Exception('no google api key provided')
@@ -17,24 +19,19 @@ class GoogleSearch:
         self.GEOLOCATION = settings.get('geolocation', '')
         self.LANGUAGE = settings.get('language', '')
 
-    def search(self, searchItem):
-        self.message = ''
-        self.term = searchItem.get('term')
-        self.orTerm = searchItem.get('orTerm', '')
-        self.MAXPAGES = searchItem.get('maxPages', 1)
-        self._blacklist = searchItem.get('blacklist', [])
-        return self._processQuery(), self.message
+    def _load_search_item(self, search_item):
+        self.term = search_item.get('term')
+        self.orTerm = search_item.get('orTerm', '')
+        self.MAXPAGES = search_item.get('maxPages', 1)
+        self._blacklist = search_item.get('blacklist', [])
 
-    def excludedSites(self):
-        exclude = ' '.join(['-site:' + url for url in self._blacklist])
-        return exclude
-
-    def _processQuery(self):
+    def _processQuery(self) -> Tuple[pd.DataFrame, str]:
+        message = ''
         pageNum = 1
         numResults = 10
         stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         service = build("customsearch", "v1", developerKey=self.KEY_VALUE)
-        result = pd.DataFrame(columns=['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap'])
+        result = pd.DataFrame(columns=self.output_columns)
         exclude = self.excludedSites()
 
         while not stop:
@@ -66,6 +63,6 @@ class GoogleSearch:
             numResults = len(items)
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         if len(result) == 0:
-            self.message = 'No results returned'
-        return result
+            message = 'No results returned'
+        return result, message
 
