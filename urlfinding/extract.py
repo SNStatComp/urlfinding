@@ -1,3 +1,4 @@
+from pathlib import Path
 import pandas as pd
 import re
 from urllib.parse import urlparse
@@ -26,7 +27,7 @@ class FeatureExtractor:
         return max(scores) if scores else 0
 
     def common_words_batch(self, df: pd.DataFrame) -> pd.Series:
-        return df.apply(lambda row: self.common_words_row(row[0], row[1]), axis=1)
+        return df.apply(lambda row: self.common_words_row(row.iloc[0], row.iloc[1]), axis=1)
 
     def extract_from_pagemap(self, pagemap: str) -> dict:
         address, postalcode, locality, telephone, urls = [], [], [], [], []
@@ -178,7 +179,7 @@ class Extract:
     def extract_features(self, df: pd.DataFrame) -> pd.DataFrame:
         config = self.mappings_config.search
         vars = list(set(self.mappings_config.features + ['Id']).intersection(df.columns))
-        df[vars] = df[vars].applymap(str.lower)
+        df[vars] = df[vars].map(str.lower)
 
         if 'pagemap' in config['columns']:
             pagemap_data = pd.DataFrame([self.extractor.extract_from_pagemap(row) for row in df['pagemap']])
@@ -187,8 +188,8 @@ class Extract:
         df = self.extractor.features(df, vars, config['columns'])
         return df
 
-    def run_extraction(self, date: str, files: List[str], reload_population:bool = False):
-        self.load_population(reload_population)
+    def run_extraction(self, date: str, files: List[str], force_reload_population:bool = False):
+        self.load_population(force_reload_population)
         data = self.preprocess(files, len(self.mappings_config.search['queries']))
         data = data.merge(self.population, on='Id')
         data = self.extract_features(data)
@@ -205,9 +206,11 @@ class Extract:
         data.drop(columns=[c for c in cols_to_remove if c in data.columns], inplace=True)
 
         # add column with distribution of hosts for a company
-        count_url = data[['Id', 'host']].groupby(['Id', 'host']).agg({'Id': 'count'})
-        perc_url = count_url.groupby(level=0).apply(lambda x: 100 * x / float(x.sum()))
-        perc_url.columns = ['percentage']
+        count_url = data[['Id', 'host']].groupby(['Id', 'host']).size()
+        # Convert to a named DataFrame
+        count_url = count_url.to_frame('url_count')
+        # Compute percentage per Id group
+        perc_url = count_url.groupby(level='Id').transform(lambda x: x * 100 / x.sum()).rename(columns={'url_count': 'percentage'})
         perc_url.reset_index(inplace=True)
         data = data.merge(perc_url, on=['Id', 'host'])
 
@@ -228,7 +231,7 @@ class Extract:
         else:
             aggs.rename(columns={'zscore_max': 'zscore', 'percentage_max': 'percentage'}, inplace=True)
 
-        out_path = self.working_directory / "data" / f"{date}features.csv"
+        out_path = Path(self.working_directory) / "data" / f"{date}features.csv"
         out_path.parent.mkdir(parents=True, exist_ok=True)
         aggs.to_csv(out_path, sep=';', index=False)
         print(f'Created feature file {out_path}')
