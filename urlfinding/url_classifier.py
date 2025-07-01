@@ -194,7 +194,8 @@ class UrlClassifier():
         """
 
         sep=";"
-        coupling_id = self.mappings_config.input['columns']['Id']
+        bidect_mapping = self.mappings_config.get_bidict_mapping()
+        coupling_id = bidect_mapping.inverse[self.id_column]
 
         # Load model and data
         model = joblib.load(model_path)
@@ -213,6 +214,7 @@ class UrlClassifier():
             how='left').drop(columns=['Id'])
         
         # Save result
-        output_path = Path(input_urls_file).with_name(f"{Path(input_urls_file).stem}_url.csv")
+        base_name = Path(input_urls_file)
+        output_path = base_name.with_name(f"{base_name.stem}_url.csv")
         merged_df.to_csv(output_path, sep=sep, index=False)
         print(f"Predictions saved in {output_path}")

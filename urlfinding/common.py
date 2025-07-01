@@ -3,7 +3,7 @@ import os
 import yaml
 from pydantic.dataclasses import dataclass
 from typing import Dict, List
-
+from bidict import bidict
 
 @dataclass
 class MappingsConfig:
@@ -12,6 +12,9 @@ class MappingsConfig:
     search: Dict[str, List]
     features: List[str]
     train: Dict
+
+    def get_bidict_mapping(self) -> bidict:
+        return bidict(self.mapping)
 
 
 class UrlFindingDefaults:
