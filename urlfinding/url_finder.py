@@ -1,51 +1,48 @@
 import yaml
-import os
-from pydantic.dataclasses import dataclass
-from pydantic import Field
-from pydantic import TypeAdapter
+from pydantic import Field, BaseModel
 
-from typing import Dict, List
+from typing import Optional
 
-@dataclass
-class MappingsConfig:
-    mapping: Dict[str, str]
-    computed: Dict[str, List[str]]
-    search: Dict[str, List]
-    features: List[str]
-    train: Dict
+from urlfinding.search import Search
+from urlfinding.url_classifier import UrlClassifier
+from urlfinding.extract import Extract
 
-@dataclass
-class UrlFinderConfig:
+from urlfinding.common import UrlFindingDefaults
+
+
+class UrlFinderConfig(BaseModel):
     search_engine: str
-    key: str
-    searchengineid: str
     geolocation: str
     language: str
-    ddg_language: str = Field(alias='DDGlanguage')
-    ddg_user_agent: str = Field(alias='DDGuser-agent')
+    ddg_language: Optional[str] = Field(default=None, alias='DDGlanguage')
+    ddg_user_agent: Optional[str] = Field(default=None, alias='DDGuser-agent')    
+    key: Optional[str] = None
+    searchengineid: Optional[str] = None
+
+    class Config:
+        validate_by_name = True  # allows using field names if aliases aren't used
 
 class UrlFinder:
-    CWD = os.getcwd()
-    MAPPINGS = f'{CWD}/config/mappings.yml'
-    POPULATION = f'{CWD}/data/companies.csv'
     
-    def __init__(self, url_finder_config_path: str = None, mappings_path: str = None, population_path: str = None):
+    def __init__(self, 
+                 url_finder_config_path: str = None, 
+                 mappings_path: str = None, 
+                 population_path: str = None,
+                 working_directory: str = None,
+                 classifier_path: str = None,
+                 url_blacklist_path: str = None):
         with open(url_finder_config_path, "r") as f:
             raw_config = yaml.safe_load(f)
 
-        self.config = TypeAdapter(UrlFinderConfig).validate_python(raw_config)
-        self.mappings_path = mappings_path or UrlFinder.MAPPINGS
-        self.population_path = population_path or UrlFinder.POPULATION
+        self.config = UrlFinderConfig(**raw_config)
+        self.mappings_path = mappings_path or UrlFindingDefaults.MAPPINGS        
+        self.population_path = population_path or UrlFindingDefaults.POPULATION
+        self.working_directory = working_directory or UrlFindingDefaults.CWD
 
-    @staticmethod
-    def get_mappings_config(mappings_path: str) -> MappingsConfig:
-        with open(mappings_path, 'r') as f:
-            config = yaml.safe_load(f)
-        mappings_config = MappingsConfig(
-            mapping = {val:key for key, val in config['input']['columns'].items() if (val is not None) and (not isinstance(val, list))},
-            computed = {key:val for key, val in config['input']['columns'].items() if isinstance(val, list)},
-            search = config['search'],
-            features = config['features'],
-            train = config['train']
-        )
-        return mappings_config
+        self.search = Search(self.population_path, mappings_path, working_directory=UrlFindingDefaults.CWD)
+
+        self.classifier_path = classifier_path
+        self.url_blacklist_path = url_blacklist_path
+        self.url_classifier = UrlClassifier(self.classifier_path ,self.mappings_path, self.population_path)
+        self.extract = Extract(self.mappings_path, self.population_path, self.working_directory, 
+                               url_blacklist_path)

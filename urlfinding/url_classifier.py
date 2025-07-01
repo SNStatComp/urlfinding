@@ -1,8 +1,8 @@
 from sklearn.base import BaseEstimator
-from urlfinding.url_finder import UrlFinder
-from pandas import pd
+from urlfinding.common import UrlFindingDefaults
+import pandas as pd
 from sklearn.model_selection import train_test_split
-import os
+
 import matplotlib.pyplot as plt 
 import joblib
 
@@ -24,13 +24,13 @@ sns.set_theme()
 class UrlClassifier():    
 
     def __init__(self, model_path:str, 
-                 mappings_path: str = UrlFinder.MAPPINGS,
-                 population_path: str = UrlFinder.POPULATION):
+                 mappings_path: str = UrlFindingDefaults.MAPPINGS,
+                 population_path: str = UrlFindingDefaults.POPULATION):
         self.id_column = 'Id'
         self.target_column = 'eqUrl'
         self.model_path = model_path
         self.population_path = population_path
-        self.mappings_config = UrlFinder.get_mappings_config(mappings_path)
+        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path)
 
     @staticmethod
     def init_model(classifier: str, hyperparam: dict = None):
@@ -99,7 +99,7 @@ class UrlClassifier():
         return x_train, y_train, x_test, y_test
 
     @staticmethod
-    def visualize_results(date, x_train, y_train, x_test, y_test, model, working_directory=UrlFinder.CWD):
+    def visualize_results(date, x_train, y_train, x_test, y_test, model, working_directory=UrlFindingDefaults.CWD):
         figures_dir = Path(working_directory) / "figures"
         figures_dir.mkdir(parents=True, exist_ok=True)
 

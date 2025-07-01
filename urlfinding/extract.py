@@ -6,10 +6,11 @@ import os
 from flatten_json import flatten
 from rapidfuzz.distance import JaroWinkler
 from nltk.tokenize import RegexpTokenizer
-from urlfinding.url_finder import UrlFinder
 from typing import List
 
 import logging
+
+from urlfinding.common import UrlFindingDefaults
 
 class FeatureExtractor:
     def __init__(self, tokenizer=None):
@@ -141,16 +142,20 @@ class Extract:
         self.extractor = FeatureExtractor()
 
         self.tokenizer = RegexpTokenizer(r'\w+')
-        self.working_directory = working_directory or UrlFinder.CWD
-        self.mappings_config = UrlFinder.get_mappings_config(mappings_path or UrlFinder.MAPPINGS)
-        self.population_path = population_path or UrlFinder.POPULATION
-        self.population = pd.read_csv(self.population_path, sep=';', dtype=str).fillna('')
-        
+        self.working_directory = working_directory or UrlFindingDefaults.CWD
+        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)
+        self.population_path = population_path or UrlFindingDefaults.POPULATION
+
+        self.population = None        
 
         if blacklist_path:
             self.load_blacklist(blacklist_path)        
 
-    def load_blacklist(self, path):
+    def load_population(self, overwrite:bool=False) -> None:
+        if self.population is None or overwrite:
+            self.population = pd.read_csv(self.population_path, sep=';', dtype=str).fillna('')
+
+    def load_blacklist(self, path) -> None:
         with open(path) as f:
             raw = f.read().splitlines()
         self.cleaner.blacklist = ['.'.join(x.split('.')[:-1]) for x in raw]
@@ -182,7 +187,8 @@ class Extract:
         df = self.extractor.features(df, vars, config['columns'])
         return df
 
-    def run_extraction(self, date: str, files: List[str]):
+    def run_extraction(self, date: str, files: List[str], reload_population:bool = False):
+        self.load_population(reload_population)
         data = self.preprocess(files, len(self.mappings_config.search['queries']))
         data = data.merge(self.population, on='Id')
         data = self.extract_features(data)

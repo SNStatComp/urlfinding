@@ -12,7 +12,7 @@ from typing import Tuple
 class DuckSearch(SearchEngine):
 
     def __init__(self, settings):
-        super().__init__()
+        super().__init__(settings)
         self.domain = 'https://duckduckgo.com'
         self.language = settings.get('DDGlanguage', 'en-us')
         self.headers = {

@@ -1,17 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-import yaml
 import pandas as pd
 import re
 import os
 import time
-from urlfinding.google_search import GoogleSearch
 from urlfinding.search_engine import SearchEngine
-from urlfinding.duck_search import DuckSearch
-from urlfinding.url_finder import UrlFinder
+
 from typing import List, Dict
 import logging
+
+from urlfinding.common import UrlFindingDefaults
 
 class Search:
     STREETNAME = 'Streetname'
@@ -22,9 +21,9 @@ class Search:
                  working_directory: str = None, 
                  output_path: str = None,
                  log_path: str = None):
-        self.population_path = population_path or UrlFinder.POPULATION
-        self.mappings_config = UrlFinder.get_mappings_config(mappings_path or UrlFinder.MAPPINGS)     
-        self.working_directory = working_directory or UrlFinder.CWD
+        self.population_path = population_path or UrlFindingDefaults.POPULATION
+        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)     
+        self.working_directory = working_directory or UrlFindingDefaults.CWD
         
         if output_path:
             self.output_path = output_path
@@ -58,14 +57,14 @@ class Search:
 
     def create_term(self, record, features: List[str], search_terms) -> str:
         res = ''
-        for x in search_terms:
-            if x in features:
-                if x == Search.STREETNAME:
-                    res += str(self.edit_street(record[x]))
+        for search_term in search_terms:
+            if search_term in features:
+                if search_term == Search.STREETNAME:
+                    res += str(self.edit_street(record[search_term]))
                 else:
-                    res += str(record[x])
+                    res += str(record[search_term])
             else:
-                res += str(x)
+                res += str(search_term)
         return res
 
     def edit_street(self, name: str) -> str:
@@ -142,12 +141,16 @@ class Search:
 
         skip = 0 if skip_rows == 0 else range(1, skip_rows + 1)
 
-        companies = pd.read_csv(self.population_path, sep=';', skip_rows=skip, nrows=nrows)
+        try:
+            companies = pd.read_csv(self.population_path, sep=';', skiprows=skip, nrows=nrows)
+        except FileNotFoundError as e:
+            print(f"{self.population_path} is missing. Set the `input_urls_path` parameter to a csv with companies to create this file.")
+            raise e
 
         for index, company in companies.iterrows():
             print(f'\rAt record: {index}', end='')
 
-            for i, term in enumerate(self.mappings_config.search_terms['queries']):
+            for i, term in enumerate(self.mappings_config.search['queries']):
                 search_term = {
                     'term': self.create_term(company, features, term['term']),
                     'orTerm': self.create_term(company, features, term.get('orTerm', [])),
@@ -168,7 +171,7 @@ class Search:
             maxrownum_f.seek(0)
             maxrownum_f.write(str(skip_rows))
 
-    def search(self, search_engine_config_path: str, blacklist_path: str, nrows: int):
+    def search(self, search_engine_config_path: str, blacklist_path: str, nrows: int, input_urls_path: str = None):
         '''
         This function startes a Search.
 
@@ -182,6 +185,9 @@ class Search:
         Returns:
         This function creates a file (<YYYYMMDD>searchResult.csv) in the 'data' folder containing the search results, where YYYYMMDD is the current date.
         '''
+        if input_urls_path:            
+            self.create_population(input_urls_path, override_population=True)
+
         search_engine = SearchEngine.from_config(search_engine_config_path)
 
         with open(blacklist_path, 'r') as f:

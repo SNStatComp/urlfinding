@@ -10,7 +10,7 @@ from typing import Tuple
 class GoogleSearch(SearchEngine):
 
     def __init__(self, settings):
-        super().__init__()
+        super().__init__(settings)
         self.KEY_VALUE = settings.get('key')
         if not self.KEY_VALUE:
             raise Exception('no google api key provided')
@@ -32,9 +32,9 @@ class GoogleSearch(SearchEngine):
         numResults = 10
         stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         service = build("customsearch", "v1", developerKey=self.KEY_VALUE)
-        result = pd.DataFrame(columns=self.output_columns)
         exclude = self.excluded_sites()
 
+        rows = []
         while not stop:
             if exclude:
                 term = self.term + ' ' + exclude
@@ -49,9 +49,10 @@ class GoogleSearch(SearchEngine):
                 lr=f'lang_{self.LANGUAGE}'
             ).execute()
             items = res.get('items',[])
+            
             for i, item in enumerate(items):
                 if not urlparse(item.get('link', '')).hostname in self._blacklist:
-                    result = result.append({
+                    rows.append({
                         'date': time.strftime('%Y%m%d'),
                         'seqno': i + 1,
                         'query': self.term,
@@ -59,10 +60,11 @@ class GoogleSearch(SearchEngine):
                         'snippet': item.get('snippet', ''),
                         'url_se': item.get('link', ''),
                         'pagemap': json.dumps(item.get('pagemap'))
-                    }, ignore_index=True)
+                    })            
             pageNum += 1
             numResults = len(items)
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
+        result = pd.DataFrame(rows)
         if len(result) == 0:
             message = 'No results returned'
         return result, message
