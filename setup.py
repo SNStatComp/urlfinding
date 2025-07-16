@@ -21,7 +21,9 @@ setuptools.setup(
         "yellowbrick",
         "selenium",
         "selenium-wire",
-        "pyderman"
+        "pyderman",
+        "bidict",
+        "nltk"
 	],
     classifiers=[
         "Development Status :: 4 - Beta"

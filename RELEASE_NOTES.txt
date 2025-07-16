@@ -1,3 +1,9 @@
+From v0.0.3. to V0.0.4
+---------------------
+- Rewritten most of code-base to switch to OOP implementation.
+- Removed many entries preventing single-points of truth.
+- Restructured classes and functions for better readability and re-usability.
+
 From v0.0.1 to v0.0.2
 ---------------------
 - README.txt: explanation added of data and config folders.
