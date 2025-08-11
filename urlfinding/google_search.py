@@ -4,21 +4,18 @@ import pandas as pd
 import json
 import time
 from urlfinding.search_engine import SearchEngine
+from urlfinding.common import UrlFinderConfig
 from typing import Tuple
 
 @SearchEngine.register("google")
 class GoogleSearch(SearchEngine):
 
-    def __init__(self, settings):
+    def __init__(self, settings: UrlFinderConfig):
         super().__init__(settings)
-        self.KEY_VALUE = settings.get('key')
-        if not self.KEY_VALUE:
-            raise Exception('no google api key provided')
-        self.SEARCH_ENGINE_ID = settings.get('searchengineid')
-        if not self.SEARCH_ENGINE_ID:
-            raise Exception('no google search_engine_id provided')
-        self.GEOLOCATION = settings.get('geolocation', '')
-        self.LANGUAGE = settings.get('language', '')
+        self.KEY_VALUE = settings.key
+        self.SEARCH_ENGINE_ID = settings.searchengineid
+        self.GEOLOCATION = settings.geolocation or ''
+        self.LANGUAGE = settings.language or ''
 
     def _load_search_item(self, search_item):
         self.term = search_item.get('term')

@@ -6,17 +6,18 @@ import random
 import requests
 from urllib import parse
 from urlfinding.search_engine import SearchEngine
+from urlfinding.common import UrlFinderConfig
 from typing import Tuple
 
 @SearchEngine.register("duckduckgo")
 class DuckSearch(SearchEngine):
 
-    def __init__(self, settings):
+    def __init__(self, settings: UrlFinderConfig):
         super().__init__(settings)
         self.domain = 'https://duckduckgo.com'
-        self.language = settings.get('DDGlanguage', 'en-us')
+        self.language = settings.ddg_language or 'en-us'
         self.headers = {
-            'User-Agent': settings.get('DDGuser-agent', ''),
+            'User-Agent': settings.ddg_user_agent or '',
             'Cache-Control': 'no-cache'
         }
 

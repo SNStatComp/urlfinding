@@ -10,8 +10,9 @@ from nltk.tokenize import RegexpTokenizer
 from typing import List
 
 import logging
+logger = logging.getLogger(__name__)
 
-from urlfinding.common import UrlFindingDefaults
+from urlfinding.common import UrlFindingDefaults, MappingsConfig
 
 class FeatureExtractor:
     def __init__(self, tokenizer=None):
@@ -50,7 +51,7 @@ class FeatureExtractor:
                             urls.append(host.replace('www.', ''))
                 address = list(set(address) - set(postalcode) - set(locality))
             except json.JSONDecodeError:
-                logging.info("Skipped parsing pagemap, invalid JSON.")
+                logger.info("Skipped parsing pagemap, invalid JSON.")
         return {
             'pagemapAddress': ', '.join(address),
             'pagemapPostalcode': ', '.join(postalcode),
@@ -137,29 +138,31 @@ class DataCleaner:
 
 class Extract:
 
-    def __init__(self, mappings_path:str=None, population_path:str=None, working_directory:str=None,
-                 blacklist_path:str=None):        
+    def __init__(self, mappings: MappingsConfig, population_path:str=None, working_directory:str=None,
+                 url_blacklist: List[str] | None = None):        
         self.cleaner = DataCleaner()
         self.extractor = FeatureExtractor()
 
         self.tokenizer = RegexpTokenizer(r'\w+')
-        self.working_directory = working_directory or UrlFindingDefaults.CWD
-        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)
-        self.population_path = population_path or UrlFindingDefaults.POPULATION
+        self.working_directory = Path(working_directory or UrlFindingDefaults.CWD)
+        self.mappings_config = mappings
+        self.population_path = Path(population_path or UrlFindingDefaults.POPULATION)
 
         self.population = None        
 
-        if blacklist_path:
-            self.load_blacklist(blacklist_path)        
+        if url_blacklist:
+            self.cleaner.blacklist = ['.'.join(x.split('.')[:-1]) for x in url_blacklist]
+
+    @classmethod
+    def from_paths(cls, mappings_path:str=None, population_path:str=None, working_directory:str=None,
+                 blacklist_path:str=None):
+        mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)
+        url_blacklist = UrlFindingDefaults.read_linesplit_list_csv(blacklist_path)
+        return cls(mappings_config, population_path, working_directory, url_blacklist)       
 
     def load_population(self, overwrite:bool=False) -> None:
         if self.population is None or overwrite:
             self.population = pd.read_csv(self.population_path, sep=';', dtype=str).fillna('')
-
-    def load_blacklist(self, path) -> None:
-        with open(path) as f:
-            raw = f.read().splitlines()
-        self.cleaner.blacklist = ['.'.join(x.split('.')[:-1]) for x in raw]
 
     def preprocess(self, files: list, nqueries: int) -> pd.DataFrame:
         data = pd.concat((pd.read_csv(f, sep=';', dtype=str).fillna('') for f in files)).reset_index(drop=True)
@@ -188,7 +191,7 @@ class Extract:
         df = self.extractor.features(df, vars, config['columns'])
         return df
 
-    def run_extraction(self, date: str, files: List[str], force_reload_population:bool = False):
+    def run(self, date: str, files: List[str], force_reload_population:bool = False):
         self.load_population(force_reload_population)
         data = self.preprocess(files, len(self.mappings_config.search['queries']))
         data = data.merge(self.population, on='Id')

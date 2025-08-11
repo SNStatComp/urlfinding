@@ -1,48 +1,59 @@
 import yaml
-from pydantic import Field, BaseModel
-
-from typing import Optional
 
 from urlfinding.search import Search
+from urlfinding.search_engine import SearchEngine
 from urlfinding.url_classifier import UrlClassifier
 from urlfinding.extract import Extract
 
-from urlfinding.common import UrlFindingDefaults
+from urlfinding.common import UrlFindingDefaults, MappingsConfig, UrlFinderConfig
+from pathlib import Path
 
-
-class UrlFinderConfig(BaseModel):
-    search_engine: str
-    geolocation: str
-    language: str
-    ddg_language: Optional[str] = Field(default=None, alias='DDGlanguage')
-    ddg_user_agent: Optional[str] = Field(default=None, alias='DDGuser-agent')    
-    key: Optional[str] = None
-    searchengineid: Optional[str] = None
-
-    class Config:
-        validate_by_name = True  # allows using field names if aliases aren't used
+from typing import List
 
 class UrlFinder:
     
     def __init__(self, 
+                 url_finder_config: UrlFinderConfig, 
+                 mappings: MappingsConfig, 
+                 population_path: str = None,
+                 working_directory: str = None,
+                 classifier_path: str = None,
+                 url_blacklist: List[str] | None = None):
+
+        self.config = url_finder_config
+        self.search_engine = SearchEngine.from_config(self.config)
+
+        self.url_blacklist = url_blacklist
+        
+        self.mappings = mappings      
+        self.population_path = Path(population_path or UrlFindingDefaults.POPULATION)
+        self.working_directory = Path(working_directory or UrlFindingDefaults.CWD)
+
+        self.searcher = Search(self.search_engine, self.mappings, self.population_path, 
+                               self.url_blacklist, working_directory=self.working_directory)
+
+        self.classifier_path = classifier_path        
+        self.url_classifier = UrlClassifier(self.classifier_path, self.mappings, self.population_path)
+        self.extractor = Extract(self.mappings, self.population_path, self.working_directory, 
+                               self.url_blacklist)
+    
+    @classmethod
+    def from_paths(cls, 
                  url_finder_config_path: str = None, 
                  mappings_path: str = None, 
                  population_path: str = None,
                  working_directory: str = None,
                  classifier_path: str = None,
                  url_blacklist_path: str = None):
-        with open(url_finder_config_path, "r") as f:
-            raw_config = yaml.safe_load(f)
+        config = UrlFindingDefaults.get_search_engine_config(url_finder_config_path)
+        mappings = UrlFindingDefaults.get_mappings_config(Path(mappings_path or UrlFindingDefaults.MAPPINGS))
+        url_blacklist = UrlFindingDefaults.read_linesplit_list_csv(url_blacklist_path)        
+        return cls(config, mappings, population_path, 
+                   working_directory, classifier_path, url_blacklist)
+    
+    def search(self, nrows: int):
+        return self.searcher.run(self.config, nrows, self.population_path)
+        
 
-        self.config = UrlFinderConfig(**raw_config)
-        self.mappings_path = mappings_path or UrlFindingDefaults.MAPPINGS        
-        self.population_path = population_path or UrlFindingDefaults.POPULATION
-        self.working_directory = working_directory or UrlFindingDefaults.CWD
-
-        self.search = Search(self.population_path, mappings_path, working_directory=UrlFindingDefaults.CWD)
-
-        self.classifier_path = classifier_path
-        self.url_blacklist_path = url_blacklist_path
-        self.url_classifier = UrlClassifier(self.classifier_path ,self.mappings_path, self.population_path)
-        self.extract = Extract(self.mappings_path, self.population_path, self.working_directory, 
-                               url_blacklist_path)
+    def extract():
+        pass

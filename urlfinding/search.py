@@ -8,34 +8,57 @@ import time
 from urlfinding.search_engine import SearchEngine
 
 from typing import List, Dict
-import logging
 
-from urlfinding.common import UrlFindingDefaults
+from urlfinding.common import UrlFindingDefaults, MappingsConfig
+from pathlib import Path
+
+import logging
+logger = logging.getLogger(__name__)
 
 class Search:
     STREETNAME = 'Streetname'
 
     def __init__(self, 
-                 population_path:str = None, 
-                 mappings_path: str = None, 
-                 working_directory: str = None, 
-                 output_path: str = None,
-                 log_path: str = None):
-        self.population_path = population_path or UrlFindingDefaults.POPULATION
-        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)     
-        self.working_directory = working_directory or UrlFindingDefaults.CWD
+                 search_engine: SearchEngine,                 
+                 mappings_config: MappingsConfig, 
+                 population_path: str | Path = None, 
+                 url_blacklist_path: List[str] | None = None,
+                 working_directory: str | Path = None, 
+                 output_path: str | Path = None,
+                 log_path: str | Path = None):
         
+        self.search_engine = search_engine
+        self.mappings_config = mappings_config
+
+        self.population_path = Path(population_path or UrlFindingDefaults.POPULATION)
+        self.url_blacklist = url_blacklist_path or []
+
+        self.working_directory = Path(working_directory or UrlFindingDefaults.CWD)
+
         if output_path:
             self.output_path = output_path
         else:
             today = time.strftime('%Y%m%d')
-            self.output_path = output_path or f'{self.working_directory}/data/{today}searchResult.csv'
+            self.output_path = Path(output_path or self.working_directory / f'data/{today}searchResult.csv')
         
-        self.log_path = log_path or f'{self.working_directory}/data/missed_companies.csv'
+        self.log_path = Path(log_path or self.working_directory / 'data/missed_companies.csv')
 
-        self.maxrownum = f'{self.working_directory}/maxrownum'
+        self.maxrownum_path = self.working_directory / 'maxrownum'
 
-    
+    @classmethod
+    def from_paths(cls, 
+                 search_engine_config_path: str | Path,                 
+                 mappings_path: str | Path = None, 
+                 population_path:str | Path = None, 
+                 url_blacklist_path: str | Path = None,
+                 working_directory: str | Path = None, 
+                 output_path: str | Path = None,
+                 log_path: str | Path = None):
+        search_engine = SearchEngine.from_config(search_engine_config_path)
+        mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)     
+        url_blacklist = UrlFindingDefaults.read_linesplit_list_csv(url_blacklist_path)
+        return cls(search_engine, mappings_config, population_path,
+                 url_blacklist, working_directory, output_path, log_path)
 
     def get_features(self, file:str, mapping: Dict[str, str], computed: Dict[str, List[str]], features: List[str]):
         feat = pd.read_csv(file, sep=';', dtype=str).fillna('')
@@ -81,11 +104,11 @@ class Search:
             location = ''
         return location
 
-    def search_item(self, item, search_engine):
+    def search_item(self, item):
         result = []
         message = ''
         if item['term']:
-            result, message = search_engine.search({
+            result, message = self.search_engine.search({
                 'term': item['term'],
                 'orTerm': item['orTerm'],
                 'blacklist': item['blacklist'],
@@ -119,7 +142,7 @@ class Search:
         The column names can be specified in a mapping file (see config/mappings.yml for an example)
         Args:
             input_urls_path (str): A .csv file with a list of enterprises for which you want to find the webaddress.
-            override_population (bool, optional): If Truem always override the population file. Defaults to True.
+            override_population (bool, optional): If True, always override the population file. Defaults to True.
         """
         # transform input file to file which can be processed
         if override_population or not os.path.isfile(self.population_path):
@@ -128,11 +151,10 @@ class Search:
                               self.mappings_config.computed, 
                               self.mappings_config.features).to_csv(self.population_path, sep=';', index=False)
         else:
-            logging.info("Population already exists. If you want to override it, set override_population=True")
+            logger.info("Population already exists. If you want to override it, set override_population=True")
         
     def _process(self,  
                  blacklist: List[str], 
-                 search_engine: SearchEngine, 
                  maxrownum_f, 
                  skip_rows:int=0, 
                  nrows:int=None):
@@ -144,11 +166,11 @@ class Search:
         try:
             companies = pd.read_csv(self.population_path, sep=';', skiprows=skip, nrows=nrows)
         except FileNotFoundError as e:
-            print(f"{self.population_path} is missing. Set the `input_urls_path` parameter to a csv with companies to create this file.")
+            logger.error(f"{self.population_path} is missing. Set the `input_urls_path` parameter to a csv with companies to create this file.")
             raise e
 
         for index, company in companies.iterrows():
-            print(f'\rAt record: {index}', end='')
+            logger.info(f'\rAt record: {index}', end='')
 
             for i, term in enumerate(self.mappings_config.search['queries']):
                 search_term = {
@@ -158,7 +180,7 @@ class Search:
                     'Id': company['Id'],
                     'queryType': i
                 }
-                result, message = self.search_item(search_term, search_engine)
+                result, message = self.search_item(search_term)
                 if len(result) > 0:
                     self.append_to_csv(result, self.output_path)
                 else:
@@ -171,7 +193,7 @@ class Search:
             maxrownum_f.seek(0)
             maxrownum_f.write(str(skip_rows))
 
-    def search(self, search_engine_config_path: str, blacklist_path: str, nrows: int, input_urls_path: str = None):
+    def run(self, nrows: int, input_urls_path: str = None):
         '''
         This function startes a Search.
 
@@ -188,16 +210,11 @@ class Search:
         if input_urls_path:            
             self.create_population(input_urls_path, override_population=True)
 
-        search_engine = SearchEngine.from_config(search_engine_config_path)
-
-        with open(blacklist_path, 'r') as f:
-            blacklist = f.read().splitlines()
-
-        if not os.path.isfile(self.maxrownum):
-            with open(self.maxrownum, 'w+') as f:
+        if not os.path.isfile(self.maxrownum_path):
+            with open(self.maxrownum_path, 'w+') as f:
                 f.write('0')        
 
-        with open(self.maxrownum, 'r+') as maxrownum_f:
+        with open(self.maxrownum_path, 'r+') as maxrownum_f:
             skip_rows = int(maxrownum_f.readline())
-            self._process(blacklist, search_engine, maxrownum_f, skip_rows, nrows)
-        print(f'\nSearchresults saved in {self.output_path}')
+            self._process(self.url_blacklist, maxrownum_f, skip_rows, nrows)
+        logger.info(f'\nSearchresults saved in {self.output_path}')
