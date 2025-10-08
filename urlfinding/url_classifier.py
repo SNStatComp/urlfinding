@@ -1,5 +1,5 @@
 from sklearn.base import BaseEstimator
-from urlfinding.common import UrlFindingDefaults, MappingsConfig
+from urlfinding.common import UrlFindingDefaults
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -19,28 +19,18 @@ from pathlib import Path
 
 from typing import Tuple, Dict
 
-import logging
-logger = logging.getLogger(__name__)
-
 sns.set_theme()
 
 class UrlClassifier():    
 
     def __init__(self, model_path:str, 
-                 mappings_config: MappingsConfig,
+                 mappings_path: str = UrlFindingDefaults.MAPPINGS,
                  population_path: str = UrlFindingDefaults.POPULATION):
         self.id_column = 'Id'
         self.target_column = 'eqUrl'
         self.model_path = model_path
         self.population_path = population_path
-        self.mappings_config = mappings_config
-
-    @classmethod
-    def from_paths(cls, model_path:str, 
-                 mappings_path: str = UrlFindingDefaults.MAPPINGS,
-                 population_path: str = UrlFindingDefaults.POPULATION):
-        mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path)
-        return cls(mappings_config, mappings_path, population_path)
+        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path)
 
     @staticmethod
     def init_model(classifier: str, hyperparam: dict = None):
@@ -227,4 +217,4 @@ class UrlClassifier():
         base_name = Path(input_urls_file)
         output_path = base_name.with_name(f"{base_name.stem}_url.csv")
         merged_df.to_csv(output_path, sep=sep, index=False)
-        logger.info(f"Predictions saved in {output_path}")
+        print(f"Predictions saved in {output_path}")

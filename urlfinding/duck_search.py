@@ -6,18 +6,18 @@ import random
 import requests
 from urllib import parse
 from urlfinding.search_engine import SearchEngine
-from urlfinding.common import UrlFinderConfig
 from typing import Tuple
+
 
 @SearchEngine.register("duckduckgo")
 class DuckSearch(SearchEngine):
 
-    def __init__(self, settings: UrlFinderConfig):
+    def __init__(self, settings):
         super().__init__(settings)
         self.domain = 'https://duckduckgo.com'
-        self.language = settings.ddg_language or 'en-us'
+        self.language = settings.get('DDGlanguage', 'en-us')
         self.headers = {
-            'User-Agent': settings.ddg_user_agent or '',
+            'User-Agent': settings.get('DDGuser-agent', ''),
             'Cache-Control': 'no-cache'
         }
 
@@ -28,13 +28,13 @@ class DuckSearch(SearchEngine):
     def _get_response(self):
         query = parse.quote(self.term)
         url = f'{self.domain}/local.js?q={query}&cb=DDG.duckbar.add_local&tg=maps_places&l={self.language}&sf=low'
-        req =requests.get(url, headers=self.headers)
+        req = requests.get(url, headers=self.headers)
         m = re.search(r'DDG.duckbar.add_local\((.*)\)', req.text)
         if m:
             vqd = list(json.loads(m.group(1))['vqd'].values())[0]
             if vqd:
                 url = f'{self.domain}/d.js?q={query}&t=D&l=wt-wt&s=0&a=hk&ss_mkt=us&vqd={vqd}&p_ent=&ex=-1&sp=0'
-                time.sleep(random.uniform(1,3))
+                time.sleep(random.uniform(1, 3))
                 return requests.get(url, headers=self.headers).text
             else:
                 return ''
@@ -56,12 +56,12 @@ class DuckSearch(SearchEngine):
             result['seqno'] = result.index + 1
             result['date'] = time.strftime('%Y%m%d')
             result['query'] = self.term
-            result['pagemap'] = '' # return this column because of compatibility with googlsearch.py
+            result['pagemap'] = ''  # return this column because of compatibility with googlsearch.py
             return result[pd.notnull(result.url_se)][self.output_columns], message
         else:
             message = 'Expected javascript file (d.js) not found.'
             return pd.DataFrame(columns=self.output_columns), message
-    
+
     def _process_query(self) -> Tuple[pd.DataFrame, str]:
         exclude = self.excluded_sites()
         if exclude:
