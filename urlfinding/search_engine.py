@@ -1,13 +1,14 @@
-from abc import ABC, abstractmethod
+from abc import  ABC, abstractmethod
 import pandas as pd
 from typing import Tuple
 import yaml
+from urlfinding.common import UrlFinderConfig
 
 
 class SearchEngine(ABC):
     _registry = {}
 
-    def __init__(self, settings):
+    def __init__(self, settings: UrlFinderConfig):
         self.settings = settings
         self._blacklist = []
         self.output_columns = ['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap']
@@ -43,10 +44,8 @@ class SearchEngine(ABC):
         return wrapper
     
     @classmethod
-    def from_config(cls, config_path: str) -> "SearchEngine":
-        with open(config_path, 'r') as f:
-            settings = yaml.safe_load(f)
-        engine = settings.get('search_engine', 'google')
+    def from_config(cls, settings: UrlFinderConfig) -> "SearchEngine":
+        engine = settings.search_engine or 'google'
         try:
             return cls._registry[engine](settings)
         except KeyError:

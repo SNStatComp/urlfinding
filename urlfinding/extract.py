@@ -3,16 +3,16 @@ import pandas as pd
 import re
 from urllib.parse import urlparse
 import json
-
+import os
 from flatten_json import flatten
 from rapidfuzz.distance import JaroWinkler
 from nltk.tokenize import RegexpTokenizer
-from typing import List, Dict
+from typing import List
 
 import logging
+logger = logging.getLogger(__name__)
 
-from urlfinding.common import UrlFindingDefaults
-
+from urlfinding.common import UrlFindingDefaults, MappingsConfig
 
 class FeatureExtractor:
     def __init__(self, tokenizer=None):
@@ -30,8 +30,7 @@ class FeatureExtractor:
     def common_words_batch(self, df: pd.DataFrame) -> pd.Series:
         return df.apply(lambda row: self.common_words_row(row.iloc[0], row.iloc[1]), axis=1)
 
-    @staticmethod
-    def extract_from_pagemap(pagemap: str) -> dict:
+    def extract_from_pagemap(self, pagemap: str) -> dict:
         address, postalcode, locality, telephone, urls = [], [], [], [], []
         if pagemap:
             try:
@@ -52,7 +51,7 @@ class FeatureExtractor:
                             urls.append(host.replace('www.', ''))
                 address = list(set(address) - set(postalcode) - set(locality))
             except json.JSONDecodeError:
-                logging.info("Skipped parsing pagemap, invalid JSON.")
+                logger.info("Skipped parsing pagemap, invalid JSON.")
         return {
             'pagemapAddress': ', '.join(address),
             'pagemapPostalcode': ', '.join(postalcode),
@@ -60,7 +59,7 @@ class FeatureExtractor:
             'pagemapTelephone': ', '.join(telephone),
             'pagemapUrl': urls,
         }
-
+    
     def features_from_variable(self, data: pd.DataFrame, variable: str, columns: list) -> pd.DataFrame:
         for column in columns:
             if column == 'pagemap':
@@ -72,8 +71,8 @@ class FeatureExtractor:
                 data[f'eq{column.title()}{variable}'] = self.common_words_batch(data[[column, variable]])
         return data
 
-    def features(self, data: pd.DataFrame, variables: list, columns: list) -> pd.DataFrame:
-        for var in variables:
+    def features(self, data: pd.DataFrame, vars: list, columns: list) -> pd.DataFrame:
+        for var in vars:
             if var != 'Id':
                 data = self.features_from_variable(data, var, columns)
         return data
@@ -83,92 +82,87 @@ class FeatureExtractor:
         seq_score_total.columns = ['Id', 'seq_score_total']
         return data.merge(seq_score_total, on='Id')
 
-    @staticmethod
-    def _zscore(values):
-        return (values - values.mean()) / values.std() if values.std() != 0 else values * 0
-
-    @staticmethod
-    def add_zscore(data: pd.DataFrame) -> pd.DataFrame:
+    def add_zscore(self, data: pd.DataFrame) -> pd.DataFrame:
+        zscore = lambda x: (x - x.mean()) / x.std() if x.std() != 0 else x * 0
         grouped = data.groupby(['Id', 'host'])['Id'].count()
-        zscores = grouped.transform(FeatureExtractor._zscore).to_frame(name='zscore').reset_index()
+        zscores = grouped.transform(zscore).to_frame(name='zscore').reset_index()
         return data.merge(zscores, on=['Id', 'host'])
 
-    @staticmethod
-    def aggregate_urls(data: pd.DataFrame) -> pd.DataFrame:
+    def aggregate_urls(self, data: pd.DataFrame) -> pd.DataFrame:
         cols = [x for x in data.columns if (re.match("^eq.+", x)) and (x != 'eqUrl')]
-        aggregates: Dict[str, str | List[str]] = {x: ['min', 'mean', 'max'] for x in cols}
-        aggregates['zscore'] = 'max'
-        aggregates['percentage'] = 'max'
-        aggregates['seq_score_total'] = 'max'
-        aggregates['seq_score'] = 'sum'
+        aggs = {x: ['min', 'mean', 'max'] for x in cols}
+        aggs['zscore'] = 'max'
+        aggs['percentage'] = 'max'
+        aggs['seq_score_total'] = 'max'
+        aggs['seq_score'] = 'sum'
         if 'eqUrl' in data.columns:
-            aggregates['eqUrl'] = 'max'
+            aggs['eqUrl'] = 'max'
             sel = ['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total', 'eqUrl'] + cols
         else:
             sel = ['Id', 'host', 'zscore', 'percentage', 'seq_score', 'seq_score_total'] + cols
-        res = data[sel].groupby(['Id', 'host']).agg(aggregates).reset_index()
+        res = data[sel].groupby(['Id', 'host']).agg(aggs).reset_index()
         res.columns = ['_'.join(tup).rstrip('_') for tup in res.columns.values]
         res['seq_score_perc'] = res['seq_score_sum'] / res['seq_score_total_max']
         return res
 
-
 class DataCleaner:
-    def __init__(self, blacklist=None):
-        self.blacklist = blacklist or []
+        def __init__(self, blacklist=None):
+            self.blacklist = blacklist or []
+        
+        def in_blacklist(self, host: str) -> bool:
+            return '.'.join(host.split('.')[-2:-1]) in self.blacklist
+        
+        @staticmethod
+        def get_host(url_str: str) -> str:
+            host = urlparse(url_str).hostname
+            return '.'.join(host.replace('www.', '').split('.')[-2:]) if host else ''
 
-    def in_blacklist(self, host: str) -> bool:
-        return '.'.join(host.split('.')[-2:-1]) in self.blacklist
+        @staticmethod
+        def get_frequent_urls(df, threshold):
+            return df['host'].value_counts()[lambda s: s > threshold].index.tolist()
 
-    @staticmethod
-    def get_host(url_str: str) -> str:
-        host = urlparse(url_str).hostname
-        return '.'.join(host.replace('www.', '').split('.')[-2:]) if host else ''
-
-    @staticmethod
-    def get_frequent_urls(df, threshold):
-        return df['host'].value_counts()[lambda s: s > threshold].index.tolist()
-
-    @staticmethod
-    def get_frequent_urls2(df, threshold):
-        return df.groupby('host')['Id'].nunique()[lambda s: s > threshold].index.tolist()
-
-    @staticmethod
-    def add_eq_url(host, url, url_redirect):
-        if url == '':
-            return False
-        host = '.'.join(host.split('.')[-2:-1])
-        url = '.'.join(url.split('.')[-2:-1])
-        if url_redirect:
-            url_redirect = '.'.join(url_redirect.split('.')[-2:-1])
-            return (host == url) or (host == url_redirect)
-        return host == url
-
+        @staticmethod
+        def get_frequent_urls2(df, threshold):
+            return df.groupby('host')['Id'].nunique()[lambda s: s > threshold].index.tolist()
+        
+        @staticmethod
+        def add_eq_url(host, url, url_redirect):
+            if url == '':
+                return False
+            host = '.'.join(host.split('.')[-2:-1])
+            url = '.'.join(url.split('.')[-2:-1])
+            if url_redirect:
+                url_redirect = '.'.join(url_redirect.split('.')[-2:-1])
+                return (host == url) or (host == url_redirect)
+            return host == url
 
 class Extract:
 
-    def __init__(self, mappings_path: str = None, population_path: str = None, working_directory: str = None,
-                 blacklist_path: str = None):
+    def __init__(self, mappings: MappingsConfig, population_path:str=None, working_directory:str=None,
+                 url_blacklist: List[str] | None = None):        
         self.cleaner = DataCleaner()
         self.extractor = FeatureExtractor()
 
         self.tokenizer = RegexpTokenizer(r'\w+')
-        self.working_directory = working_directory or UrlFindingDefaults.CWD
-        self.mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)
-        self.population_path = population_path or UrlFindingDefaults.POPULATION
+        self.working_directory = Path(working_directory or UrlFindingDefaults.CWD)
+        self.mappings_config = mappings
+        self.population_path = Path(population_path or UrlFindingDefaults.POPULATION)
 
-        self.population = None
+        self.population = None        
 
-        if blacklist_path:
-            self.load_blacklist(blacklist_path)
+        if url_blacklist:
+            self.cleaner.blacklist = ['.'.join(x.split('.')[:-1]) for x in url_blacklist]
 
-    def load_population(self, overwrite: bool = False) -> None:
+    @classmethod
+    def from_paths(cls, mappings_path:str=None, population_path:str=None, working_directory:str=None,
+                 blacklist_path:str=None):
+        mappings_config = UrlFindingDefaults.get_mappings_config(mappings_path or UrlFindingDefaults.MAPPINGS)
+        url_blacklist = UrlFindingDefaults.read_linesplit_list_csv(blacklist_path)
+        return cls(mappings_config, population_path, working_directory, url_blacklist)       
+
+    def load_population(self, overwrite:bool=False) -> None:
         if self.population is None or overwrite:
             self.population = pd.read_csv(self.population_path, sep=';', dtype=str).fillna('')
-
-    def load_blacklist(self, path) -> None:
-        with open(path) as f:
-            raw = f.read().splitlines()
-        self.cleaner.blacklist = ['.'.join(x.split('.')[:-1]) for x in raw]
 
     def preprocess(self, files: list, nqueries: int) -> pd.DataFrame:
         data = pd.concat((pd.read_csv(f, sep=';', dtype=str).fillna('') for f in files)).reset_index(drop=True)
@@ -197,7 +191,7 @@ class Extract:
         df = self.extractor.features(df, vars, config['columns'])
         return df
 
-    def run_extraction(self, date: str, files: List[str], force_reload_population: bool = False):
+    def run(self, date: str, files: List[str], force_reload_population:bool = False):
         self.load_population(force_reload_population)
         data = self.preprocess(files, len(self.mappings_config.search['queries']))
         data = data.merge(self.population, on='Id')
@@ -219,8 +213,7 @@ class Extract:
         # Convert to a named DataFrame
         count_url = count_url.to_frame('url_count')
         # Compute percentage per Id group
-        perc_url = count_url.groupby(level='Id').transform(lambda x: x * 100 / x.sum()).rename(
-            columns={'url_count': 'percentage'})
+        perc_url = count_url.groupby(level='Id').transform(lambda x: x * 100 / x.sum()).rename(columns={'url_count': 'percentage'})
         perc_url.reset_index(inplace=True)
         data = data.merge(perc_url, on=['Id', 'host'])
 
@@ -231,15 +224,13 @@ class Extract:
 
         if 'Url' in self.population.columns:
             if 'Url_redirect' in self.population.columns:
-                data['eqUrl'] = [self.cleaner.add_eq_url(x, y, z) for x, y, z in
-                                 zip(data['host'], data['Url'], data['Url_redirect'])]
+                data['eqUrl'] = [self.cleaner.add_eq_url(x, y, z) for x, y, z in zip(data['host'], data['Url'], data['Url_redirect'])]
             else:
                 data['eqUrl'] = [self.cleaner.add_eq_url(x, y, '') for x, y in zip(data['host'], data['Url'])]
 
         aggs = self.extractor.aggregate_urls(data)
         if 'Url' in self.population.columns:
-            aggs.rename(columns={'zscore_max': 'zscore', 'eqUrl_max': 'eqUrl', 'percentage_max': 'percentage'},
-                        inplace=True)
+            aggs.rename(columns={'zscore_max': 'zscore', 'eqUrl_max': 'eqUrl', 'percentage_max': 'percentage'}, inplace=True)
         else:
             aggs.rename(columns={'zscore_max': 'zscore', 'percentage_max': 'percentage'}, inplace=True)
 
@@ -247,3 +238,4 @@ class Extract:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         aggs.to_csv(out_path, sep=';', index=False)
         print(f'Created feature file {out_path}')
+    

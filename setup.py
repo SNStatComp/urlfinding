@@ -13,8 +13,8 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/SNStatComp/urlfinding.git",
     packages=setuptools.find_packages(),
-    install_requires=[
-        "google-api-python-client",
+	install_requires=[
+		"google-api-python-client",
         "flatten_json",
         "rapidfuzz",
         "pycm",
@@ -24,7 +24,7 @@ setuptools.setup(
         "pyderman",
         "bidict",
         "nltk"
-    ],
+	],
     classifiers=[
         "Development Status :: 4 - Beta"
         "Programming Language :: Python :: 3",
