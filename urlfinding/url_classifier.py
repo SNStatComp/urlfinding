@@ -89,12 +89,18 @@ class UrlClassifier():
         x_train, y_train, x_test, y_test = self.create_train_test(data, population, features)
         model = self.create_model(date, x_train, y_train, classifier, hyperparam, save_model=save_model)
         if visualize_scores:
-            self.visualize_results(date, x_train, y_train, x_test, y_test, model['model'])
+            self.visualize_results(date, x_train, y_train, x_test, y_test, model)
     
-    def create_train_test(self, data: pd.DataFrame, population: pd.DataFrame, features: list):
+    def create_train_test(self, data: pd.DataFrame, population: pd.DataFrame, features: list, test_size: float = 0.25):
+        print("hi")
+        x_train, x_test, y_train, y_test = train_test_split(data, data[[self.target_column]], test_size=test_size, stratify=data[[self.target_column]])  #, random_state=0)
+
+        return x_train[features].copy(), y_train, x_test[features].copy(), y_test
+    
+    def create_train_test_old(self, data: pd.DataFrame, population: pd.DataFrame, features: list, test_size: float = 0.25):
         # Select ID column and split
         ids = population[[self.id_column]]
-        ids_train, ids_test = train_test_split(ids, test_size=0.3, random_state=0)
+        ids_train, ids_test = train_test_split(ids, test_size=test_size, stratify=population[[self.target_column]])  #, random_state=0)
 
         # Merge to create train/test sets
         train = pd.merge(data, ids_train, on=self.id_column)
@@ -205,7 +211,8 @@ class UrlClassifier():
 
         sep=";"
         bidect_mapping = self.mappings_config.get_bidict_mapping()
-        coupling_id = bidect_mapping.inverse[self.id_column]
+        #coupling_id = bidect_mapping.inverse[self.id_column]
+        coupling_id = self.id_column
 
         # Load model and data
         model = joblib.load(model_path)
@@ -228,3 +235,4 @@ class UrlClassifier():
         output_path = base_name.with_name(f"{base_name.stem}_url.csv")
         merged_df.to_csv(output_path, sep=sep, index=False)
         logger.info(f"Predictions saved in {output_path}")
+        return merged_df

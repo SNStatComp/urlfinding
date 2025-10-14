@@ -13,6 +13,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 from urlfinding.common import UrlFindingDefaults, MappingsConfig
+from urllib.parse import urlparse
 
 class FeatureExtractor:
     def __init__(self, tokenizer=None):
@@ -126,7 +127,20 @@ class DataCleaner:
             return df.groupby('host')['Id'].nunique()[lambda s: s > threshold].index.tolist()
         
         @staticmethod
+        def extract_domain(url: str) -> str:
+            if not url.startswith(('http://', 'https://')):
+                url = f"https://{url}"
+            
+            parsed = urlparse(url)
+            domain = parsed.netloc or parsed.path
+            return domain.lower().removeprefix("www.")
+
+        @staticmethod
         def add_eq_url(host, url, url_redirect):
+            host =  DataCleaner.extract_domain(host)
+            url =  DataCleaner.extract_domain(url)
+            url_redirect =  DataCleaner.extract_domain(url_redirect)
+
             if url == '':
                 return False
             host = '.'.join(host.split('.')[-2:-1])
@@ -202,7 +216,7 @@ class Extract:
         # remove columns not needed for training/predicting
         cols_to_remove = self.population.columns.tolist()
         if 'Url' in self.population.columns:
-            cols_to_remove = [e for e in cols_to_remove if e not in ['Url', 'Url_redirect']]
+            cols_to_remove = [e for e in cols_to_remove if e not in ['Url', 'Url_redirect', 'Id']]
         else:
             cols_to_remove.remove('Id')
         cols_to_remove += self.mappings_config.search['columns']
