@@ -5,9 +5,9 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="urlfinding",
-    version="0.0.3",
-    author="Dick Windmeijer",
-    author_email="dwnr@cbs.nl",
+    version="0.0.4",
+    author="Nick de Wolf",
+    author_email="njg.dewolf@cbs.nl",
     description="Generic software for finding websites of enterprises using a search engine and machine learning.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,12 +16,14 @@ setuptools.setup(
 	install_requires=[
 		"google-api-python-client",
         "flatten_json",
-        "jellyfish",
+        "rapidfuzz",
         "pycm",
         "yellowbrick",
         "selenium",
         "selenium-wire",
-        "pyderman"
+        "pyderman",
+        "bidict",
+        "nltk"
 	],
     classifiers=[
         "Development Status :: 4 - Beta"
@@ -29,6 +31,6 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.6',
+    python_requires='>=3.11',
     zip_safe=False
 )

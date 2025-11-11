@@ -37,31 +37,41 @@ python setup.py install
 ## Quick start: finding websites of NSIs
 
 The examples folder contains a working example.
-One needs two folders, one named `data` for the data, features, blacklist and features and one named `config` for the two configuration files: `config.yml` and `mappings.yml`.
+We recommend using two folders, one named `data` for the data, features, blacklist and features and one named `config` for the two configuration files: `config.yml` and `mappings.yml`.
 The example runs in a Python notebook [examples/nsis.ipynb](examples/nsis.ipynb) showing how to search for websites of National Statistical Offices (NSIs) using the pre-trained model provided in this repo.
 
 ## API
 
-Include the `urlfinding` module as follows:
+You can use the `urlfinding` module as follows:
 ```
-import urlfinding as uf
+from urlfinding import UrlFinder
+
+population_path    = './data/NSIs.csv'
+googleconfig = './config/config.yml'
+mappings     = './config/mappings.yml'
+blacklist    = './data/blacklist.txt'
+
+urlfinder = UrlFinder.from_paths(
+    url_finder_config_path=googleconfig,
+    mappings_path=mappings,
+    population_path=population_path,
+    working_directory=None,
+    classifier_path=None,
+    url_blacklist_path=blacklist
+)
 ```
 Then you have the following functions:
 
 ### Search
 
-`uf.search(base_file, googleconfig, blacklist, nrows)`
+`urlfinder.searcher.run(nrows: int, input_urls_path: str = None)`
 
 This function startes a Google search.
 
-- `base_file`: A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl_) the file must at least include the following columns: _id, tradename, legalname, address, postalcode and municipality. The column names can be specified in a mapping file (see config/mappings.yml for an example).
-The legal name can be the same as the tradename if you have only one name.
-
-- `googleconfig`: This file contains your credentials for using the Google custom search engine API
-
-- `blacklist`: A file containing urls you want to exclude from your search
-
 - `nrows`: Number of records to process. Google provides 100 queries per day for free. The urlfinding software issues 6 queries per record (see methodology paper reference above). Thus for example 10 enterprises 6 * 10 = 60 queries are fired. Every query returns at most 10 search results.
+
+- `input_urls_path`: If not already set when creating the object, A .csv file with a list of enterprises for which you want to find the webaddress. If you want to use the pretrained ML model provided (data/model.pkl_) the file must at least include the following columns: _id, tradename, legalname, address, postalcode and municipality. The column names can be specified in a mapping file (see config/mappings.yml for an example).
+The legal name can be the same as the tradename if you have only one name.
 
 This function creates a file (<YYYYMMDD_>_searchResult.csv_) in the _data folder containing the search results, where YYYYMMDD is the current date.
 
@@ -70,31 +80,30 @@ To facilitate splitting up multiple search sessions on bigger data files, the se
 
 ### Extract
 
-`uf.extract(date, data_files, blacklist)`
+`urlfinder.extractor.run(date: str, files: List[str], force_reload_population:bool = False)`
 
 This function extracts a feature file to be used for training your Machine Learning model or predicting using your an already trained model.
 
-
 - `date`: Used for adding a 'timestamp' to the name of the created feature file
 
-- `data_files`: list of files containing the search results
+- `files`: list of files containing the search results
 
-- `blacklist`: see above
+- `force_reload_population`: True, if we want to load the input data from file again, instead of re-using the data created upon loading the object.
 
 This function creates the feature file <YYYYMMDD_>_features___agg.csv in the data folder
 
 
 ### Predict
 
-`uf.predict(feature_file, model_file, base_file)`
+`urlfinder.url_classifier.predict(features_path: str, model_path: str, input_urls_file: str)`
 
 This function predicts urls using a previously trained ML model.
 
-- `feature_file`: file containing the features
+- `features_path`: file containing the features
 
-- `model_file`: Pickle file containing the ML model (created with our package)
+- `model_path`: Pickle file containing the ML model (created with our package)
 
-- `base_file`: See base_file at `uf.scrape.start()`
+- `input_urls_file`: See input_urls_file at `urlfinder.searcher.run()`
 
 This function creates the file <base__file>_url.csv in the data folder containing the predicted urls. This file contains all data from the base file with 3 columns added:
 
@@ -106,7 +115,7 @@ This function creates the file <base__file>_url.csv in the data folder containin
 
 ### Train
 
-`uf.train(date, data_file, save_model, visualize_scores)`
+`urlfinder.url_classifier.train(date, data_file, save_model, visualize_scores)`
 
 This function trains a classifier accoring to the specification in the `train` block of the mapping file `mappings.yml`.
 There you can specify the classifier to train and the features and hyperparameters to use for this classifier.

@@ -30,7 +30,7 @@ search:
     - {term: [TradeName, ' ', contact], orTerm: [LegalName]}
     - {term: [TradeName, ' ', Address, ' ', contact], orTerm: [LegalName]}
     - {term: [TradeName, ' ', Postalcode, ' ', contact], orTerm: [LegalName]}
-    - {term: [Location]}
+    - {term: [TradeName, ' ', Location], orTerm: [LegalName]}
     - {term: [TradeName], orTerm: [LegalName]}
     - {term: [TradeName, " inanchor:contact"], orTerm: [LegalName]}
 # In this block you must specify the columns used for creating the features used for training and predicting.

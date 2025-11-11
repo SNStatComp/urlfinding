@@ -3,40 +3,35 @@ from urllib.parse import urlparse
 import pandas as pd
 import json
 import time
-import os
+from urlfinding.search_engine import SearchEngine
+from urlfinding.common import UrlFinderConfig
+from typing import Tuple
 
-class GoogleSearch:
+@SearchEngine.register("google")
+class GoogleSearch(SearchEngine):
 
-    def __init__(self, settings):
-        self.KEY_VALUE = settings.get('key')
-        if not self.KEY_VALUE:
-            raise Exception('no google api key provided')
-        self.SEARCH_ENGINE_ID = settings.get('searchengineid')
-        if not self.SEARCH_ENGINE_ID:
-            raise Exception('no google search_engine_id provided')
-        self.GEOLOCATION = settings.get('geolocation', '')
-        self.LANGUAGE = settings.get('language', '')
+    def __init__(self, settings: UrlFinderConfig):
+        super().__init__(settings)
+        self.KEY_VALUE = settings.key
+        self.SEARCH_ENGINE_ID = settings.searchengineid
+        self.GEOLOCATION = settings.geolocation or ''
+        self.LANGUAGE = settings.language or ''
 
-    def search(self, searchItem):
-        self.message = ''
-        self.term = searchItem.get('term')
-        self.orTerm = searchItem.get('orTerm', '')
-        self.MAXPAGES = searchItem.get('maxPages', 1)
-        self._blacklist = searchItem.get('blacklist', [])
-        return self._processQuery(), self.message
+    def _load_search_item(self, search_item):
+        self.term = search_item.get('term')
+        self.orTerm = search_item.get('orTerm', '')
+        self.MAXPAGES = search_item.get('maxPages', 1)
+        self._blacklist = search_item.get('blacklist', [])
 
-    def excludedSites(self):
-        exclude = ' '.join(['-site:' + url for url in self._blacklist])
-        return exclude
-
-    def _processQuery(self):
+    def _process_query(self) -> Tuple[pd.DataFrame, str]:
+        message = ''
         pageNum = 1
         numResults = 10
         stop = (pageNum > self.MAXPAGES) or (numResults < 10)
         service = build("customsearch", "v1", developerKey=self.KEY_VALUE)
-        result = pd.DataFrame(columns=['date', 'seqno', 'query', 'title', 'snippet', 'url_se', 'pagemap'])
-        exclude = self.excludedSites()
+        exclude = self.excluded_sites()
 
+        rows = []
         while not stop:
             if exclude:
                 term = self.term + ' ' + exclude
@@ -51,9 +46,10 @@ class GoogleSearch:
                 lr=f'lang_{self.LANGUAGE}'
             ).execute()
             items = res.get('items',[])
+            
             for i, item in enumerate(items):
                 if not urlparse(item.get('link', '')).hostname in self._blacklist:
-                    result = result.append({
+                    rows.append({
                         'date': time.strftime('%Y%m%d'),
                         'seqno': i + 1,
                         'query': self.term,
@@ -61,11 +57,12 @@ class GoogleSearch:
                         'snippet': item.get('snippet', ''),
                         'url_se': item.get('link', ''),
                         'pagemap': json.dumps(item.get('pagemap'))
-                    }, ignore_index=True)
+                    })            
             pageNum += 1
             numResults = len(items)
             stop = (pageNum > self.MAXPAGES) or (numResults < 10)
+        result = pd.DataFrame(rows)
         if len(result) == 0:
-            self.message = 'No results returned'
-        return result
+            message = 'No results returned'
+        return result, message
 
