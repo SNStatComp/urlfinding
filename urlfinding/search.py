@@ -74,7 +74,7 @@ class Search:
                         feat[key] += feat[mapping[x]]
                 else:
                     feat[key] += str(x)
-
+            features += [key]
         feat = feat[['Id'] + features]
         return feat
 
