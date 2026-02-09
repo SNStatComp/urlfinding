@@ -1,0 +1,4 @@
+search_engine:  duckduckgo # Possible values [google, duckduckgo]
+browser:        firefox # only needed for search_engine = duckduckgo. Possible values: [firefox, chrome]
+geolocation:    nl # country of your google host here eg. nl. Default: ''
+language:       nl-NL # restricts the search to documents in particular language eg. nl. Default: ''

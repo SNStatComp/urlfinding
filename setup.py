@@ -23,7 +23,8 @@ setuptools.setup(
         "selenium-wire",
         "pyderman",
         "bidict",
-        "nltk"
+        "nltk",
+        "curl_cffi"
 	],
     classifiers=[
         "Development Status :: 4 - Beta"

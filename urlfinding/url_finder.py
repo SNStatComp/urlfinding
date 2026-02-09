@@ -8,7 +8,7 @@ from urlfinding.extract import Extract
 from urlfinding.common import UrlFindingDefaults, MappingsConfig, UrlFinderConfig
 from pathlib import Path
 
-from typing import List
+from typing import List, Optional
 
 class UrlFinder:
     
@@ -18,7 +18,7 @@ class UrlFinder:
                  population_path: str = None,
                  working_directory: str = None,
                  classifier_path: str = None,
-                 url_blacklist: List[str] | None = None):
+                 url_blacklist: Optional[List[str]] = None):
 
         self.config = url_finder_config
         self.search_engine = SearchEngine.from_config(self.config)
@@ -55,5 +55,5 @@ class UrlFinder:
         return self.searcher.run(self.config, nrows, self.population_path)
         
 
-    def extract():
+    def extract(self):
         pass

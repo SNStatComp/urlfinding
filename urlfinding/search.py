@@ -92,14 +92,14 @@ class Search:
 
     def edit_street(self, name: str) -> str:
         if name:
-            location = re.sub(r'STRWG$', 'STRAATWEG', name)
-            location = re.sub(r'WG$', 'WEG', location)
-            location = re.sub(r'STR$', 'STRAAT', location)
-            location = re.sub(r'^PLN|PLN$', 'PLEIN', location)
-            location = re.sub(r'^LN|LN$', 'LAAN', location)
-            location = re.sub(r'SNGL$', 'SINGEL', location)
-            location = re.sub(r'DK$', 'DIJK', location)
-            location = re.sub(r'KD$', 'KADE', location)
+            location = re.sub(r'STRWG\b', 'STRAATWEG', name)
+            location = re.sub(r'WG\b', 'WEG', location)
+            location = re.sub(r'STR\b', 'STRAAT', location)
+            location = re.sub(r'^PLN|PLN\b', 'PLEIN', location)
+            location = re.sub(r'^LN|LN\b', 'LAAN', location)
+            location = re.sub(r'SNGL\b', 'SINGEL', location)
+            location = re.sub(r'DK\b', 'DIJK', location)
+            location = re.sub(r'KD\b', 'KADE', location)
         else:
             location = ''
         return location
